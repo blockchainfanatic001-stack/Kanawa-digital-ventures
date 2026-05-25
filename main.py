@@ -64,7 +64,7 @@ def delete_product(product_id: int):
     db.close()
     return {"sako": "An goge"}
 
-# --- FRONTEND (ALIEXPRESS UI + BILINGUAL) ---
+# --- FRONTEND (ALIEXPRESS UI + BILINGUAL + CRYPTO) ---
 @app.get("/kasuwa", response_class=HTMLResponse)
 def vip_market():
     html_content = """
@@ -79,22 +79,18 @@ def vip_market():
             
             body { font-family: 'Roboto', sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; padding-bottom: 70px; color: #333; }
             
-            /* Top Search Bar */
             .top-header { background: #fff; padding: 10px 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px;}
             .logo-text { font-size: 18px; font-weight: 900; color: #e62e04; margin: 0; letter-spacing: -0.5px;}
             .search-box { flex: 1; background: #f0f2f5; border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; border: 1px solid #e0e0e0;}
             .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; }
             
-            /* Action Buttons (Top) */
             .top-actions { display: flex; padding: 10px 15px; background: #fff; gap: 10px; overflow-x: auto; scrollbar-width: none; align-items: center;}
             .action-btn { background: #ffebee; color: #e62e04; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 13px; white-space: nowrap; cursor: pointer; }
             .action-btn.post { background: #e62e04; color: white; }
             .lang-toggle { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer;}
 
-            /* Banners */
             .banner-section { margin: 10px 15px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); border-radius: 12px; padding: 20px; color: #d81b60; font-weight: bold; font-size: 18px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
 
-            /* Product Grid */
             .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 10px 15px; }
             .card { background: #fff; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; border: 1px solid #f0f0f0; transition: transform 0.2s;}
             .card:active { transform: scale(0.98); }
@@ -107,33 +103,31 @@ def vip_market():
             .card-vendor { font-size: 11px; color: #999; margin-bottom: 8px; }
             .add-cart-btn { background: #111; color: #fff; border: none; width: 100%; padding: 8px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 13px;}
 
-            /* Bottom Navigation Bar */
             .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #eee; z-index: 100; padding-bottom: max(10px, env(safe-area-inset-bottom));}
             .nav-item { display: flex; flex-direction: column; align-items: center; color: #666; text-decoration: none; font-size: 11px; cursor: pointer; width: 25%;}
             .nav-item.active { color: #e62e04; font-weight: bold; }
             .nav-icon { font-size: 22px; margin-bottom: 3px; }
             .cart-badge { background: #e62e04; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; position: absolute; margin-left: 15px; margin-top: -5px;}
 
-            /* Modals */
             .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: flex-end;}
-            .modal-content { background: #fff; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease-out;}
-            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            .modal-content { background: #fff; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; max-height: 85vh; overflow-y: auto;}
             .close-modal { float: right; font-size: 24px; font-weight: bold; color: #333; cursor: pointer; border: none; background: none;}
             
-            /* Form Elements */
             .form-group { margin-bottom: 15px; }
             .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: bold;}
             .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; background: #f9f9f9; outline: none;}
-            .form-control:focus { border-color: #e62e04; background: #fff; }
-            .submit-btn { background: #e62e04; color: #fff; width: 100%; padding: 15px; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; margin-top: 10px; cursor: pointer;}
             
-            /* Cart Items */
+            .submit-btn { background: #e62e04; color: #fff; width: 100%; padding: 15px; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; margin-top: 10px; cursor: pointer;}
+            .crypto-btn { background: #14F195; color: #111; width: 100%; padding: 15px; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; margin-top: 10px; cursor: pointer;}
+            
             .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee;}
             .cart-item-info { display: flex; flex-direction: column; }
             .cart-item-title { font-size: 14px; font-weight: bold; color: #333;}
             .cart-item-price { color: #e62e04; font-weight: bold; margin-top: 5px;}
             .remove-btn { background: #f5f5f5; border: none; padding: 5px 10px; border-radius: 5px; color: #e62e04; font-weight: bold; cursor: pointer;}
 
+            .crypto-box { background: #f0fdf4; border: 1px solid #14F195; padding: 15px; border-radius: 10px; text-align: center; margin-top: 15px;}
+            .wallet-addr { font-family: monospace; font-size: 12px; word-break: break-all; background: #fff; padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px dashed #ccc;}
         </style>
     </head>
     <body>
@@ -192,14 +186,8 @@ def vip_market():
                 <button class="close-modal" onclick="closeModal('uploadModal')">&times;</button>
                 <h3 style="margin-top:0;" id="mPostTitle">Dora Kayanka A Saukake</h3>
                 <form id="uploadForm">
-                    <div class="form-group">
-                        <label id="lName">Sunan Kaya</label>
-                        <input type="text" id="name" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label id="lPrice">Farashi (₦)</label>
-                        <input type="number" id="price" class="form-control" required>
-                    </div>
+                    <div class="form-group"><label id="lName">Sunan Kaya</label><input type="text" id="name" class="form-control" required></div>
+                    <div class="form-group"><label id="lPrice">Farashi (₦)</label><input type="number" id="price" class="form-control" required></div>
                     <div class="form-group">
                         <label id="lCat">Zabi Rukuni</label>
                         <select id="category" class="form-control" required>
@@ -209,14 +197,8 @@ def vip_market():
                             <option value="Wasu">Wasu / Others</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label id="lVendor">Sunan Shagonka</label>
-                        <input type="text" id="vendor" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label id="lPhone">Lambar Waya</label>
-                        <input type="number" id="phone" class="form-control" required>
-                    </div>
+                    <div class="form-group"><label id="lVendor">Sunan Shagonka</label><input type="text" id="vendor" class="form-control" required></div>
+                    <div class="form-group"><label id="lPhone">Lambar Waya</label><input type="number" id="phone" class="form-control" required></div>
                     <div class="form-group">
                         <label id="lImg">Dauki Hoto (Max 2MB)</label>
                         <input type="file" id="image_file" class="form-control" accept="image/*" style="background:#fff; padding:8px;" required>
@@ -244,8 +226,29 @@ def vip_market():
                     <div style="display:flex; justify-content:space-between; font-size:20px; font-weight:900;">
                         <span id="cTotalText">Jimilla:</span> <span style="color:#e62e04;">₦<span id="cartTotal">0</span></span>
                     </div>
-                    <button class="submit-btn" id="btnCheckout" onclick="checkout()">BIYA KUDI YANZU</button>
+                    
+                    <button class="submit-btn" id="btnCheckoutNaira" onclick="checkoutNaira()">💳 BIYA DA NAIRA (PAYSTACK)</button>
+                    <button class="crypto-btn" id="btnCheckoutCrypto" onclick="showCryptoPayment()">🪙 BIYA DA CRYPTO (SOL/USDT)</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="cryptoModal" class="modal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="closeModal('cryptoModal')">&times;</button>
+                <h3 style="margin-top:0;" id="crTitle">Tsarin Biyan Kudi na Crypto</h3>
+                <p id="crDesc">Tura daidai adadin kudin zuwa wannan asusun na Solana. Zaka iya tura SOL ko USDT (SPL).</p>
+                
+                <div class="crypto-box">
+                    <h2 style="margin:0; color:#111;">$<span id="cryptoUsdTotal">0.00</span></h2>
+                    <p style="margin:5px 0; color:#666; font-size:12px;" id="crRate">(Kiyasin Farashi: $1 = ₦1,500)</p>
+                    
+                    <div class="wallet-addr" id="walletAddr">GDcKRBja7tDKqDftF2WGj3zcwUUBUoUV2xCqaMxfKwzR</div>
+                    
+                    <button class="submit-btn" style="background:#333; padding:10px;" id="btnCopyWallet" onclick="copyWallet()">📋 Kwafi Asusun (Copy)</button>
+                </div>
+                
+                <button class="crypto-btn" style="margin-top:20px;" id="btnPaidCrypto" onclick="confirmCryptoPaid()">✅ NA TURA KUDIN</button>
             </div>
         </div>
 
@@ -265,262 +268,144 @@ def vip_market():
         </div>
 
         <script>
+            const EXCHANGE_RATE = 1500; // 1 USD = 1500 NGN (Kiyasin farashi)
+
             const dict = {
                 'ha': {
-                    search: "Bincika waya, takalma...",
-                    postAd: "➕ Sayar da Kaya",
+                    search: "Bincika waya, takalma...", postAd: "➕ Sayar da Kaya",
                     catAll: "Dukkan Rukunoni", catPhones: "📱 Wayoyi", catShoes: "👞 Takalma", catClothes: "👕 Kayan Sawa", catOthers: "📦 Wasu",
                     bannerTitle: "🔥 Zafafan Kayayyaki A Cikin Gida", bannerSub: "Kudin Aikawa ₦500 kacal ko Ka Karba Kyauta!",
-                    loading: "Ana lodo kayayyaki...", empty: "Babu kayan da ya dace.",
-                    shippingLabel: "Shipping: ₦500 (Local)", vendorLabel: "Shago:", addToCartBtn: "Saka a Kwando",
+                    loading: "Ana lodo kayayyaki...", empty: "Babu kayan da ya dace.", shippingLabel: "Shipping: ₦500 (Local)", vendorLabel: "Shago:", addToCartBtn: "Saka a Kwando",
                     navHome: "Gida", navCat: "Rukunoni", navCart: "Kwando", navAcc: "Account",
                     mPostTitle: "Dora Kayanka A Saukake", lName: "Sunan Kaya", lPrice: "Farashi (₦)", lCat: "Zabi Rukuni", lVendor: "Sunan Shagonka", lPhone: "Lambar Waya", lImg: "Dauki Hoto (Max 2MB)", btnSubmitPost: "POST AD YANZU",
-                    mCartTitle: "Kwandon Siyayyarka", cartEmpty: "Babu kaya a kwandonka.", cSubText: "Kudin Kaya:", cShipText: "Kudin Aikawa:", cTotalText: "Jimilla:", btnCheckout: "BIYA KUDI YANZU",
-                    alertAdded: "An saka a kwando!", alertSuccess: "An dora kayanka!", alertFail: "Matsala wajen dorawa", alertCheckout: "Wannan shine matakin da za'a hada da Paystack. An tura Order dinka!"
+                    mCartTitle: "Kwandon Siyayyarka", cartEmpty: "Babu kaya a kwandonka.", cSubText: "Kudin Kaya:", cShipText: "Kudin Aikawa:", cTotalText: "Jimilla:", 
+                    btnNaira: "💳 BIYA DA NAIRA (PAYSTACK)", btnCrypto: "🪙 BIYA DA CRYPTO (SOL/USDT)",
+                    crTitle: "Tsarin Biyan Kudi na Crypto", crDesc: "Tura daidai adadin kudin zuwa wannan asusun na Solana. Zaka iya tura SOL ko USDT (SPL).", crRate: "(Kiyasin Farashi: $1 = ₦1,500)", btnCopy: "📋 Kwafi Asusun (Copy)", btnPaid: "✅ NA TURA KUDIN",
+                    alertAdded: "An saka a kwando!", alertSuccess: "An dora kayanka!", alertFail: "Matsala wajen dorawa", alertNaira: "Za'a tura ka Paystack nan bada dadewa ba!", alertCopied: "An kwafi asusun!", alertCryptoDone: "Mungode! Zamu duba asusunmu mu turo maka kayanka."
                 },
                 'en': {
-                    search: "Search phones, shoes...",
-                    postAd: "➕ Post Ad",
+                    search: "Search phones, shoes...", postAd: "➕ Post Ad",
                     catAll: "All Categories", catPhones: "📱 Phones", catShoes: "👞 Shoes", catClothes: "👕 Clothes", catOthers: "📦 Others",
                     bannerTitle: "🔥 Hot Local Products", bannerSub: "Delivery Fee just ₦500 or Free Pickup!",
-                    loading: "Loading products...", empty: "No products found.",
-                    shippingLabel: "Shipping: ₦500 (Local)", vendorLabel: "Vendor:", addToCartBtn: "Add to Cart",
+                    loading: "Loading products...", empty: "No products found.", shippingLabel: "Shipping: ₦500 (Local)", vendorLabel: "Vendor:", addToCartBtn: "Add to Cart",
                     navHome: "Home", navCat: "Categories", navCart: "Cart", navAcc: "Account",
                     mPostTitle: "Post Your Ad Easily", lName: "Product Name", lPrice: "Price (₦)", lCat: "Select Category", lVendor: "Shop Name", lPhone: "Phone Number", lImg: "Take Photo (Max 2MB)", btnSubmitPost: "POST AD NOW",
-                    mCartTitle: "Your Shopping Cart", cartEmpty: "Your cart is empty.", cSubText: "Subtotal:", cShipText: "Shipping Fee:", cTotalText: "Total:", btnCheckout: "CHECKOUT NOW",
-                    alertAdded: "Added to cart!", alertSuccess: "Ad posted successfully!", alertFail: "Error posting ad", alertCheckout: "This is where Paystack integration happens. Order placed!"
+                    mCartTitle: "Your Shopping Cart", cartEmpty: "Your cart is empty.", cSubText: "Subtotal:", cShipText: "Shipping Fee:", cTotalText: "Total:", 
+                    btnNaira: "💳 PAY WITH NAIRA (PAYSTACK)", btnCrypto: "🪙 PAY WITH CRYPTO (SOL/USDT)",
+                    crTitle: "Crypto Payment Gateway", crDesc: "Send the exact amount to this Solana wallet. You can send SOL or USDT (SPL).", crRate: "(Est. Rate: $1 = ₦1,500)", btnCopy: "📋 Copy Address", btnPaid: "✅ I HAVE PAID",
+                    alertAdded: "Added to cart!", alertSuccess: "Ad posted successfully!", alertFail: "Error posting ad", alertNaira: "Paystack integration coming soon!", alertCopied: "Wallet address copied!", alertCryptoDone: "Thank you! We will verify the transaction and ship your order."
                 }
             };
 
-            let currentLang = 'ha';
-            let allProducts = [];
-            let cart = [];
-            const SHIPPING_FEE = 500;
+            let currentLang = 'ha'; let allProducts = []; let cart = []; const SHIPPING_FEE = 500; let currentCartTotal = 0;
 
             function changeLanguage(lang) {
                 currentLang = lang;
-                document.getElementById('searchInput').placeholder = dict[lang].search;
-                document.getElementById('btnPostAd').innerText = dict[lang].postAd;
-                document.getElementById('catAll').innerText = dict[lang].catAll;
-                document.getElementById('catPhones').innerText = dict[lang].catPhones;
-                document.getElementById('catShoes').innerText = dict[lang].catShoes;
-                document.getElementById('catClothes').innerText = dict[lang].catClothes;
-                document.getElementById('catOthers').innerText = dict[lang].catOthers;
-                document.getElementById('bannerTitle').innerText = dict[lang].bannerTitle;
-                document.getElementById('bannerSub').innerText = dict[lang].bannerSub;
-                
-                document.getElementById('navHome').innerText = dict[lang].navHome;
-                document.getElementById('navCat').innerText = dict[lang].navCat;
-                document.getElementById('navCart').innerText = dict[lang].navCart;
-                document.getElementById('navAcc').innerText = dict[lang].navAcc;
-
-                document.getElementById('mPostTitle').innerText = dict[lang].mPostTitle;
-                document.getElementById('lName').innerText = dict[lang].lName;
-                document.getElementById('lPrice').innerText = dict[lang].lPrice;
-                document.getElementById('lCat').innerText = dict[lang].lCat;
-                document.getElementById('lVendor').innerText = dict[lang].lVendor;
-                document.getElementById('lPhone').innerText = dict[lang].lPhone;
-                document.getElementById('lImg').innerText = dict[lang].lImg;
-                document.getElementById('btnSubmitPost').innerText = dict[lang].btnSubmitPost;
-
-                document.getElementById('mCartTitle').innerText = dict[lang].mCartTitle;
-                document.getElementById('cSubText').innerText = dict[lang].cSubText;
-                document.getElementById('cShipText').innerText = dict[lang].cShipText;
-                document.getElementById('cTotalText').innerText = dict[lang].cTotalText;
-                document.getElementById('btnCheckout').innerText = dict[lang].btnCheckout;
-
-                filterProducts();
-                updateCart();
+                document.getElementById('searchInput').placeholder = dict[lang].search; document.getElementById('btnPostAd').innerText = dict[lang].postAd;
+                document.getElementById('catAll').innerText = dict[lang].catAll; document.getElementById('catPhones').innerText = dict[lang].catPhones; document.getElementById('catShoes').innerText = dict[lang].catShoes; document.getElementById('catClothes').innerText = dict[lang].catClothes; document.getElementById('catOthers').innerText = dict[lang].catOthers;
+                document.getElementById('bannerTitle').innerText = dict[lang].bannerTitle; document.getElementById('bannerSub').innerText = dict[lang].bannerSub;
+                document.getElementById('navHome').innerText = dict[lang].navHome; document.getElementById('navCat').innerText = dict[lang].navCat; document.getElementById('navCart').innerText = dict[lang].navCart; document.getElementById('navAcc').innerText = dict[lang].navAcc;
+                document.getElementById('mPostTitle').innerText = dict[lang].mPostTitle; document.getElementById('lName').innerText = dict[lang].lName; document.getElementById('lPrice').innerText = dict[lang].lPrice; document.getElementById('lCat').innerText = dict[lang].lCat; document.getElementById('lVendor').innerText = dict[lang].lVendor; document.getElementById('lPhone').innerText = dict[lang].lPhone; document.getElementById('lImg').innerText = dict[lang].lImg; document.getElementById('btnSubmitPost').innerText = dict[lang].btnSubmitPost;
+                document.getElementById('mCartTitle').innerText = dict[lang].mCartTitle; document.getElementById('cSubText').innerText = dict[lang].cSubText; document.getElementById('cShipText').innerText = dict[lang].cShipText; document.getElementById('cTotalText').innerText = dict[lang].cTotalText; 
+                document.getElementById('btnCheckoutNaira').innerText = dict[lang].btnNaira; document.getElementById('btnCheckoutCrypto').innerText = dict[lang].btnCrypto;
+                document.getElementById('crTitle').innerText = dict[lang].crTitle; document.getElementById('crDesc').innerText = dict[lang].crDesc; document.getElementById('crRate').innerText = dict[lang].crRate; document.getElementById('btnCopyWallet').innerText = dict[lang].btnCopy; document.getElementById('btnPaidCrypto').innerText = dict[lang].btnPaid;
+                filterProducts(); updateCart();
             }
 
             function openModal(id) { document.getElementById(id).style.display = 'flex'; }
             function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-            // Base64 Logic
             document.getElementById("image_file").addEventListener("change", function() {
                 const file = this.files[0];
                 if (file) {
                     if(file.size > 2000000){ alert("Hoto yayi nauyi / File too large (Max 2MB)"); this.value = ""; return; }
-                    const reader = new FileReader();
-                    reader.onload = function(e) { document.getElementById("base64String").value = e.target.result; };
-                    reader.readAsDataURL(file);
+                    const reader = new FileReader(); reader.onload = function(e) { document.getElementById("base64String").value = e.target.result; }; reader.readAsDataURL(file);
                 }
             });
 
-            // Post Ad
             document.getElementById('uploadForm').onsubmit = function(e) {
-                e.preventDefault();
-                const btn = document.getElementById('btnSubmitPost');
-                btn.innerText = "...";
-                btn.disabled = true;
-
-                const catSelect = document.getElementById('category');
-                const catValue = catSelect.options[catSelect.selectedIndex].value;
-
-                const data = {
-                    name: document.getElementById('name').value,
-                    price: parseFloat(document.getElementById('price').value),
-                    description: document.getElementById('desc').value,
-                    category: catValue,
-                    vendor_name: document.getElementById('vendor').value,
-                    vendor_phone: document.getElementById('phone').value,
-                    image_base64: document.getElementById('base64String').value
-                };
+                e.preventDefault(); const btn = document.getElementById('btnSubmitPost'); btn.innerText = "..."; btn.disabled = true;
+                const catSelect = document.getElementById('category'); const catValue = catSelect.options[catSelect.selectedIndex].value;
+                const data = { name: document.getElementById('name').value, price: parseFloat(document.getElementById('price').value), description: document.getElementById('desc').value, category: catValue, vendor_name: document.getElementById('vendor').value, vendor_phone: document.getElementById('phone').value, image_base64: document.getElementById('base64String').value };
                 
-                fetch('/saka-kaya/', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                }).then(res => res.json()).then(res => {
-                    alert(dict[currentLang].alertSuccess);
-                    document.getElementById('uploadForm').reset();
-                    document.getElementById('base64String').value = '';
-                    closeModal('uploadModal');
-                    loadProducts(); 
-                    btn.innerText = dict[currentLang].btnSubmitPost;
-                    btn.disabled = false;
+                fetch('/saka-kaya/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+                .then(res => res.json()).then(res => {
+                    alert(dict[currentLang].alertSuccess); document.getElementById('uploadForm').reset(); document.getElementById('base64String').value = ''; closeModal('uploadModal'); loadProducts(); btn.innerText = dict[currentLang].btnSubmitPost; btn.disabled = false;
                 }).catch(() => { alert(dict[currentLang].alertFail); btn.innerText = dict[currentLang].btnSubmitPost; btn.disabled = false;});
             };
 
-            // Filter & Render
             function filterProducts() {
-                const query = document.getElementById('searchInput').value.toLowerCase();
-                const catSelect = document.getElementById('categoryFilter');
-                const cat = catSelect.options[catSelect.selectedIndex].value;
-                
-                const filtered = allProducts.filter(p => {
-                    const matchName = p.name.toLowerCase().includes(query);
-                    const matchCat = (cat === "Duka") || (p.category === cat);
-                    return matchName && matchCat;
-                });
+                const query = document.getElementById('searchInput').value.toLowerCase(); const catSelect = document.getElementById('categoryFilter'); const cat = catSelect.options[catSelect.selectedIndex].value;
+                const filtered = allProducts.filter(p => { return p.name.toLowerCase().includes(query) && ((cat === "Duka") || (p.category === cat)); });
                 renderProducts(filtered);
             }
 
             function renderProducts(products) {
-                const container = document.getElementById('kayayyaki');
-                container.innerHTML = '';
+                const container = document.getElementById('kayayyaki'); container.innerHTML = '';
                 if(products.length === 0){ container.innerHTML = `<div style="text-align:center; padding:20px; width:100%; color:#999;">${dict[currentLang].empty}</div>`; return; }
-                
                 products.forEach(kaya => {
                     const oldPrice = Math.floor(kaya.price * 1.2); 
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <img src="${kaya.image_base64}" class="card-img" alt="${kaya.name}">
-                        <div class="card-details">
-                            <h4 class="card-title">${kaya.name}</h4>
-                            <div class="card-price">₦${kaya.price} <small>₦${oldPrice}</small></div>
-                            <span class="card-shipping">${dict[currentLang].shippingLabel}</span>
-                            <div class="card-vendor">${dict[currentLang].vendorLabel} ${kaya.vendor_name}</div>
-                            <button class="add-cart-btn" onclick="addToCart(${kaya.id}, '${kaya.name}', ${kaya.price})">${dict[currentLang].addToCartBtn}</button>
-                        </div>
-                    `;
+                    const card = document.createElement('div'); card.className = 'card';
+                    card.innerHTML = `<img src="${kaya.image_base64}" class="card-img" alt="${kaya.name}"><div class="card-details"><h4 class="card-title">${kaya.name}</h4><div class="card-price">₦${kaya.price} <small>₦${oldPrice}</small></div><span class="card-shipping">${dict[currentLang].shippingLabel}</span><div class="card-vendor">${dict[currentLang].vendorLabel} ${kaya.vendor_name}</div><button class="add-cart-btn" onclick="addToCart(${kaya.id}, '${kaya.name}', ${kaya.price})">${dict[currentLang].addToCartBtn}</button></div>`;
                     container.appendChild(card);
                 });
             }
 
-            function loadProducts() {
-                fetch('/duba-kaya/').then(res => res.json()).then(data => {
-                    allProducts = data;
-                    renderProducts(allProducts);
-                    renderAdminProducts(allProducts);
-                }).catch(()=> { document.getElementById('loadingTxt').innerText = "Network Error"; });
-            }
+            function loadProducts() { fetch('/duba-kaya/').then(res => res.json()).then(data => { allProducts = data; renderProducts(allProducts); renderAdminProducts(allProducts); }).catch(()=> { document.getElementById('loadingTxt').innerText = "Network Error"; }); }
 
-            // Cart Logic
             function addToCart(id, name, price) {
-                cart.push({id, name, price});
-                updateCart();
-                const toast = document.createElement('div');
-                toast.innerText = dict[currentLang].alertAdded;
-                toast.style.cssText = "position:fixed; top:20px; right:20px; background:black; color:white; padding:10px 20px; border-radius:20px; z-index:999; opacity:0.9;";
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
+                cart.push({id, name, price}); updateCart();
+                const toast = document.createElement('div'); toast.innerText = dict[currentLang].alertAdded; toast.style.cssText = "position:fixed; top:20px; right:20px; background:black; color:white; padding:10px 20px; border-radius:20px; z-index:999; opacity:0.9;";
+                document.body.appendChild(toast); setTimeout(() => toast.remove(), 2000);
             }
 
             function updateCart() {
-                document.getElementById('cartCount').innerText = cart.length;
-                const cartItemsDiv = document.getElementById('cartItems');
-                
-                if(cart.length === 0) {
-                    cartItemsDiv.innerHTML = dict[currentLang].cartEmpty;
-                    document.getElementById('cartSubtotal').innerText = '₦0';
-                    document.getElementById('cartTotal').innerText = '0';
-                    return;
-                }
-
-                cartItemsDiv.innerHTML = '';
-                let subtotal = 0;
-                cart.forEach((item, index) => {
-                    subtotal += item.price;
-                    cartItemsDiv.innerHTML += `
-                        <div class="cart-item">
-                            <div class="cart-item-info">
-                                <span class="cart-item-title">${item.name}</span>
-                                <span class="cart-item-price">₦${item.price}</span>
-                            </div>
-                            <button class="remove-btn" onclick="removeFromCart(${index})">X</button>
-                        </div>
-                    `;
-                });
-                
-                document.getElementById('cartSubtotal').innerText = '₦' + subtotal;
-                document.getElementById('cartTotal').innerText = subtotal + SHIPPING_FEE;
+                document.getElementById('cartCount').innerText = cart.length; const cartItemsDiv = document.getElementById('cartItems');
+                if(cart.length === 0) { cartItemsDiv.innerHTML = dict[currentLang].cartEmpty; document.getElementById('cartSubtotal').innerText = '₦0'; document.getElementById('cartTotal').innerText = '0'; currentCartTotal = 0; return; }
+                cartItemsDiv.innerHTML = ''; let subtotal = 0;
+                cart.forEach((item, index) => { subtotal += item.price; cartItemsDiv.innerHTML += `<div class="cart-item"><div class="cart-item-info"><span class="cart-item-title">${item.name}</span><span class="cart-item-price">₦${item.price}</span></div><button class="remove-btn" onclick="removeFromCart(${index})">X</button></div>`; });
+                document.getElementById('cartSubtotal').innerText = '₦' + subtotal; currentCartTotal = subtotal + SHIPPING_FEE; document.getElementById('cartTotal').innerText = currentCartTotal;
             }
 
-            function removeFromCart(index) {
-                cart.splice(index, 1);
-                updateCart();
-            }
+            function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
 
-            function checkout() {
+            function checkoutNaira() { if(cart.length === 0) { alert(dict[currentLang].cartEmpty); return; } alert(dict[currentLang].alertNaira); }
+
+            function showCryptoPayment() {
                 if(cart.length === 0) { alert(dict[currentLang].cartEmpty); return; }
-                alert(dict[currentLang].alertCheckout);
-                cart = [];
-                updateCart();
-                closeModal('cartModal');
+                const usdTotal = (currentCartTotal / EXCHANGE_RATE).toFixed(2);
+                document.getElementById('cryptoUsdTotal').innerText = usdTotal;
+                closeModal('cartModal'); openModal('cryptoModal');
             }
 
-            // Admin Logic
+            function copyWallet() {
+                navigator.clipboard.writeText("GDcKRBja7tDKqDftF2WGj3zcwUUBUoUV2xCqaMxfKwzR");
+                alert(dict[currentLang].alertCopied);
+            }
+
+            function confirmCryptoPaid() {
+                alert(dict[currentLang].alertCryptoDone);
+                cart = []; updateCart(); closeModal('cryptoModal');
+            }
+
             function loginAdmin() {
-                if(document.getElementById('adminPass').value === "kanawa123") {
-                    document.getElementById('adminAuth').style.display = 'none';
-                    document.getElementById('adminPanel').style.display = 'block';
-                } else {
-                    alert("Kuskure!");
-                }
+                if(document.getElementById('adminPass').value === "kanawa123") { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; } else { alert("Kuskure!"); }
             }
 
             function renderAdminProducts(products) {
-                const adminDiv = document.getElementById('adminItems');
-                adminDiv.innerHTML = '';
-                products.forEach(p => {
-                    adminDiv.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding:10px 0;">
-                            <span>${p.name} (₦${p.price})</span>
-                            <button onclick="deleteProduct(${p.id})" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">Goge</button>
-                        </div>
-                    `;
-                });
+                const adminDiv = document.getElementById('adminItems'); adminDiv.innerHTML = '';
+                products.forEach(p => { adminDiv.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding:10px 0;"><span>${p.name} (₦${p.price})</span><button onclick="deleteProduct(${p.id})" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">Goge</button></div>`; });
             }
 
-            function deleteProduct(id) {
-                if(confirm("Goge? / Delete?")) {
-                    fetch('/goge-kaya/' + id, { method: 'DELETE' }).then(() => loadProducts());
-                }
-            }
+            function deleteProduct(id) { if(confirm("Goge? / Delete?")) { fetch('/goge-kaya/' + id, { method: 'DELETE' }).then(() => loadProducts()); } }
 
-            window.onload = function() {
-                changeLanguage('ha'); 
-                loadProducts();
-            };
+            window.onload = function() { changeLanguage('ha'); loadProducts(); };
         </script>
     </body>
     </html>
     """
     return HTMLResponse(content=html_content)
 
-# LURA NAN: Wannan layin shine ya bambanta da na Pydroid! (Don Replit ne)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
