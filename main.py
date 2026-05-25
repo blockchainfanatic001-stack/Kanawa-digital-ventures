@@ -124,7 +124,7 @@ def vip_market():
             .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; }
             
             .sidenav { height: 100%; width: 260px; position: fixed; z-index: 300; top: 0; left: -260px; background-color: #fff; overflow-x: hidden; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column;}
-            .sidenav-header { background: #e62e04; color: white; padding: 25px 20px; font-size: 20px; font-weight: 900; position: relative;}
+            .sidenav-header { background: #e62e04; color: white; padding: 25px 20px; font-size: 18px; font-weight: 900; position: relative;}
             .sidenav-close { position: absolute; top: 15px; right: 15px; font-size: 24px; color: white; cursor: pointer; background: none; border: none; font-weight: bold;}
             .sidenav a { padding: 15px 20px; text-decoration: none; font-size: 15px; color: #333; display: block; border-bottom: 1px solid #eee; transition: 0.2s; display: flex; align-items: center; gap: 15px; font-weight: bold;}
             .sidenav a:hover { background-color: #f9f9f9; color: #e62e04; }
@@ -180,7 +180,7 @@ def vip_market():
         <div id="sidenavOverlay" class="sidenav-overlay" onclick="closeNav()"></div>
 
         <div id="sideNav" class="sidenav">
-            <div class="sidenav-header">Kanawa Market<button class="sidenav-close" onclick="closeNav()">&times;</button></div>
+            <div class="sidenav-header">Kanawa Digital Market<button class="sidenav-close" onclick="closeNav()">&times;</button></div>
             <a href="#" onclick="closeNav(); openModal('contactModal')"><span>📞</span> <span id="nContact">Tuntube Mu</span></a>
             <a href="#" onclick="closeNav(); openModal('helpModal')"><span>❓</span> <span id="nHelp">Taimako</span></a>
             <a href="#" onclick="closeNav(); openModal('termsModal')"><span>📜</span> <span id="nTerms">Ka'idojin Aiki</span></a>
@@ -190,7 +190,7 @@ def vip_market():
 
         <div class="top-header">
             <span class="menu-icon" onclick="openNav()">☰</span>
-            <span class="logo-text">Kanawa Market</span>
+            <span class="logo-text">Kanawa Digital Market</span>
             <div class="search-box"><span>🔍</span><input type="text" id="searchInput" placeholder="Bincika nan..." onkeyup="filterProducts()"></div>
         </div>
 
@@ -198,17 +198,7 @@ def vip_market():
             <button class="lang-toggle" onclick="changeLanguage('ha')">HA</button>
             <button class="lang-toggle" onclick="changeLanguage('en')">EN</button>
             <button class="action-btn post" id="btnPostAd" onclick="openModal('uploadModal')">➕ Sayar da Kaya</button>
-            <select class="action-btn" id="categoryFilter" onchange="filterProducts()" style="outline:none; display:none;">
-                <option value="Duka">Duka</option>
-                <option value="Phones">Phones</option>
-                <option value="Fashion">Fashion</option>
-                <option value="Vehicles">Vehicles</option>
-                <option value="Food">Food</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Home">Home</option>
-                <option value="Beauty">Beauty</option>
-                <option value="Others">Others</option>
-            </select>
+            <input type="hidden" id="categoryFilter" value="Duka">
         </div>
 
         <div class="banner-section"><span id="bannerTitle">🔥 Zafafan Kayayyaki</span><br><span style="font-size: 12px; font-weight: normal; color: #333;" id="bannerSub">Kudin Aikawa ₦500 kacal!</span></div>
@@ -284,14 +274,14 @@ def vip_market():
                     <div class="form-group"><label id="lPrice">Farashi (₦)</label><input type="number" id="price" class="form-control" required></div>
                     <div class="form-group"><label id="lCat">Zabi Rukuni</label>
                         <select id="category" class="form-control" required>
-                            <option value="Phones">Wayoyi & Kwamfutoci</option>
-                            <option value="Fashion">Kayan Sawa</option>
-                            <option value="Vehicles">Ababen Hawa (Motoci/Babura)</option>
-                            <option value="Food">Kayan Abinci / Daddawa</option>
-                            <option value="Electronics">Kayan Lantarki</option>
-                            <option value="Home">Kayan Gida</option>
-                            <option value="Beauty">Kayan Kwalliya</option>
-                            <option value="Others">Wasu / Others</option>
+                            <option value="Phones" id="optPhones">Wayoyi & Kwamfutoci</option>
+                            <option value="Fashion" id="optFashion">Kayan Sawa</option>
+                            <option value="Vehicles" id="optVehicles">Ababen Hawa (Motoci/Babura)</option>
+                            <option value="Food" id="optFood">Kayan Abinci / Daddawa</option>
+                            <option value="Electronics" id="optElectronics">Kayan Lantarki</option>
+                            <option value="Home" id="optHome">Kayan Gida</option>
+                            <option value="Beauty" id="optBeauty">Kayan Kwalliya</option>
+                            <option value="Others" id="optOthers">Wasu / Others</option>
                         </select>
                     </div>
                     <div class="form-group"><label id="lDesc">Bayanin Kaya (Description)</label><textarea id="desc" class="form-control" rows="2" required></textarea></div>
@@ -359,6 +349,7 @@ def vip_market():
             const dict = {
                 'ha': { 
                     search: "Bincika nan...", postAd: "➕ Sayar da Kaya", empty: "Babu kayan da ya dace.", ship: "Shipping: ₦500",
+                    bannerTitle: "🔥 Zafafan Kayayyaki", bannerSub: "Kudin Aikawa ₦500 kacal!", loading: "Ana lodo kayayyaki...",
                     navHome: "Gida", navCat: "Rukunoni", navCart: "Kwando",
                     nContact: "Tuntube Mu", nHelp: "Taimako", nTerms: "Ka'idojin Aiki", nSell: "Sayar da Kaya", nAdmin: "Dakin Gudanarwa",
                     mPostTitle: "Dora Kayanka A Saukake", lName: "Sunan Kaya", lPrice: "Farashi (₦)", lCat: "Zabi Rukuni", lDesc: "Bayanin Kaya", lVendor: "Sunan Shagonka", lPhone: "Lambar Waya", lImg: "Dauki Hoto (Max 2MB)", btnSubmitPost: "POST AD YANZU",
@@ -368,10 +359,13 @@ def vip_market():
                     pdVendorText: "Shago / Vendor:", pdAddToCart: "Saka a Kwando",
                     mContactTitle: "Tuntube Mu", mContactBody: "Kira ko WhatsApp: 09166614894", mHelpTitle: "Taimako", mHelpBody: "Zabi kaya, saka a kwando, cike adireshinka, sannan ka biya. Zamu kawo maka kofar gida.", mTermsTitle: "Ka'idojin Aiki", mTermsBody: "Kudinka yana cikin aminci. Muna cajin N500 kudin aikawa a Gombe.",
                     mAdminTitle: "Dakin Gudanarwa (Admin)", btnAdminLogin: "Shiga", tabProducts: "Kayayyaki", tabOrders: "Siyayya",
-                    mCatTitleModal: "Zabi Rukuni", btnCatAll: "Dukkan Rukunoni", btnCatPhones: "📱 Wayoyi & Kwamfutoci", btnCatFashion: "👗 Kayan Sawa", btnCatVehicles: "🚗 Ababen Hawa", btnCatFood: "🍅 Kayan Abinci", btnCatElectronics: "📺 Kayan Lantarki", btnCatHome: "🪑 Kayan Gida", btnCatBeauty: "💄 Kayan Kwalliya", btnCatOthers: "📦 Wasu"
+                    mCatTitleModal: "Zabi Rukuni", btnCatAll: "Dukkan Rukunoni", btnCatPhones: "📱 Wayoyi & Kwamfutoci", btnCatFashion: "👗 Kayan Sawa", btnCatVehicles: "🚗 Ababen Hawa", btnCatFood: "🍅 Kayan Abinci", btnCatElectronics: "📺 Kayan Lantarki", btnCatHome: "🪑 Kayan Gida", btnCatBeauty: "💄 Kayan Kwalliya", btnCatOthers: "📦 Wasu",
+                    // ALERTS
+                    alertImgSize: "Hoto yayi nauyi (Max 2MB)", alertAdPosted: "An dora kayanka!", alertCartAdd: "An saka a kwando!", alertCartEmpty: "Kwando fanko ne!", alertOrderSuccess: "Mun samu Order dinka! Zamu kawo maka kaya nan bada dadewa ba.", alertPayCancel: "An fasa biya.", alertCopied: "An kwafi asusun!", alertError: "Kuskure! Password ba daidai ba.", alertDelConfirm: "Goge wannan kayan?", noOrders: "Babu Siyayya tukunna."
                 },
                 'en': { 
                     search: "Search items...", postAd: "➕ Post Ad", empty: "No products found.", ship: "Shipping: ₦500",
+                    bannerTitle: "🔥 Hot Local Products", bannerSub: "Delivery Fee just ₦500!", loading: "Loading products...",
                     navHome: "Home", navCat: "Categories", navCart: "Cart",
                     nContact: "Contact Us", nHelp: "Help & FAQ", nTerms: "Terms & Conditions", nSell: "Sell on KDV", nAdmin: "Admin Login",
                     mPostTitle: "Post Your Ad Easily", lName: "Product Name", lPrice: "Price (₦)", lCat: "Select Category", lDesc: "Description", lVendor: "Shop Name", lPhone: "Phone Number", lImg: "Take Photo (Max 2MB)", btnSubmitPost: "POST AD NOW",
@@ -381,7 +375,9 @@ def vip_market():
                     pdVendorText: "Vendor:", pdAddToCart: "Add to Cart",
                     mContactTitle: "Contact Us", mContactBody: "Call or WhatsApp: 09166614894", mHelpTitle: "Help Center", mHelpBody: "Select an item, add to cart, fill your address, and pay securely. We deliver to your door.", mTermsTitle: "Terms & Conditions", mTermsBody: "Your payment is secure. We charge a flat N500 delivery fee within Gombe.",
                     mAdminTitle: "Admin Panel", btnAdminLogin: "Login", tabProducts: "Products", tabOrders: "Orders",
-                    mCatTitleModal: "Select Category", btnCatAll: "All Categories", btnCatPhones: "📱 Phones & Computers", btnCatFashion: "👗 Fashion", btnCatVehicles: "🚗 Vehicles", btnCatFood: "🍅 Food & Groceries", btnCatElectronics: "📺 Electronics", btnCatHome: "🪑 Home & Furniture", btnCatBeauty: "💄 Health & Beauty", btnCatOthers: "📦 Others"
+                    mCatTitleModal: "Select Category", btnCatAll: "All Categories", btnCatPhones: "📱 Phones & Computers", btnCatFashion: "👗 Fashion", btnCatVehicles: "🚗 Vehicles", btnCatFood: "🍅 Food & Groceries", btnCatElectronics: "📺 Electronics", btnCatHome: "🪑 Home & Furniture", btnCatBeauty: "💄 Health & Beauty", btnCatOthers: "📦 Others",
+                    // ALERTS
+                    alertImgSize: "Image too large (Max 2MB)", alertAdPosted: "Ad posted successfully!", alertCartAdd: "Added to cart!", alertCartEmpty: "Cart is empty!", alertOrderSuccess: "Order received! We will deliver your items soon.", alertPayCancel: "Payment cancelled.", alertCopied: "Wallet address copied!", alertError: "Error! Incorrect password.", alertDelConfirm: "Delete this item?", noOrders: "No orders yet."
                 }
             };
             let currentLang = 'ha'; let allProducts = []; let cart = []; const SHIPPING_FEE = 500; let currentCartTotal = 0;
@@ -393,6 +389,12 @@ def vip_market():
                 currentLang = lang; 
                 document.getElementById('searchInput').placeholder = dict[lang].search;
                 document.getElementById('btnPostAd').innerText = dict[lang].postAd;
+                
+                // Sabbin Abubuwa (Banner & Loading)
+                document.getElementById('bannerTitle').innerText = dict[lang].bannerTitle;
+                document.getElementById('bannerSub').innerText = dict[lang].bannerSub;
+                if(document.getElementById('loadingTxt')) document.getElementById('loadingTxt').innerText = dict[lang].loading;
+                
                 document.getElementById('navHome').innerText = dict[lang].navHome; document.getElementById('navCat').innerText = dict[lang].navCat; document.getElementById('navCart').innerText = dict[lang].navCart;
                 
                 document.getElementById('nContact').innerText = dict[lang].nContact; document.getElementById('nHelp').innerText = dict[lang].nHelp; document.getElementById('nTerms').innerText = dict[lang].nTerms; document.getElementById('nSell').innerText = dict[lang].nSell; document.getElementById('nAdmin').innerText = dict[lang].nAdmin;
@@ -419,6 +421,16 @@ def vip_market():
                 document.getElementById('btnCatElectronics').innerText = dict[lang].btnCatElectronics; document.getElementById('btnCatHome').innerText = dict[lang].btnCatHome; 
                 document.getElementById('btnCatBeauty').innerText = dict[lang].btnCatBeauty; document.getElementById('btnCatOthers').innerText = dict[lang].btnCatOthers;
                 
+                // Form Options Translation
+                document.getElementById('optPhones').innerText = dict[lang].btnCatPhones.substring(3);
+                document.getElementById('optFashion').innerText = dict[lang].btnCatFashion.substring(3);
+                document.getElementById('optVehicles').innerText = dict[lang].btnCatVehicles.substring(3);
+                document.getElementById('optFood').innerText = dict[lang].btnCatFood.substring(3);
+                document.getElementById('optElectronics').innerText = dict[lang].btnCatElectronics.substring(3);
+                document.getElementById('optHome').innerText = dict[lang].btnCatHome.substring(3);
+                document.getElementById('optBeauty').innerText = dict[lang].btnCatBeauty.substring(3);
+                document.getElementById('optOthers').innerText = dict[lang].btnCatOthers.substring(3);
+
                 filterProducts(); updateCart();
             }
 
@@ -428,7 +440,7 @@ def vip_market():
             document.getElementById("image_file").addEventListener("change", function() {
                 const file = this.files[0];
                 if (file) {
-                    if(file.size > 2000000){ alert("Hoto yayi nauyi (Max 2MB)"); this.value = ""; return; }
+                    if(file.size > 2000000){ alert(dict[currentLang].alertImgSize); this.value = ""; return; }
                     const reader = new FileReader(); reader.onload = function(e) { document.getElementById("base64String").value = e.target.result; }; reader.readAsDataURL(file);
                 }
             });
@@ -437,7 +449,7 @@ def vip_market():
                 e.preventDefault(); document.getElementById('btnSubmitPost').disabled = true;
                 const data = { name: document.getElementById('name').value, price: parseFloat(document.getElementById('price').value), description: document.getElementById('desc').value, category: document.getElementById('category').value, vendor_name: document.getElementById('vendor').value, vendor_phone: document.getElementById('phone').value, image_base64: document.getElementById('base64String').value };
                 fetch('/saka-kaya/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }).then(res => res.json()).then(res => {
-                    alert("An dora kayanka!"); document.getElementById('uploadForm').reset(); closeModal('uploadModal'); loadProducts(); document.getElementById('btnSubmitPost').disabled = false;
+                    alert(dict[currentLang].alertAdPosted); document.getElementById('uploadForm').reset(); closeModal('uploadModal'); loadProducts(); document.getElementById('btnSubmitPost').disabled = false;
                 });
             };
 
@@ -472,7 +484,7 @@ def vip_market():
                 openModal('productModal');
             }
 
-            function addToCart(id, name, price) { cart.push({id, name, price}); updateCart(); alert("An saka a kwando!"); }
+            function addToCart(id, name, price) { cart.push({id, name, price}); updateCart(); alert(dict[currentLang].alertCartAdd); }
 
             function updateCart() {
                 document.getElementById('cartCount').innerText = cart.length; 
@@ -502,7 +514,7 @@ def vip_market():
             }
 
             function initCheckout(method) {
-                if(cart.length === 0) return alert("Kwando fanko ne!");
+                if(cart.length === 0) return alert(dict[currentLang].alertCartEmpty);
                 document.getElementById('paymentChoice').value = method;
                 closeModal('cartModal'); openModal('checkoutModal');
             }
@@ -515,7 +527,7 @@ def vip_market():
             function saveOrder(method) {
                 const orderData = { customer_name: document.getElementById('cName').value, customer_phone: document.getElementById('cPhone').value, customer_email: document.getElementById('cEmail').value, customer_address: document.getElementById('cAddress').value, items: JSON.stringify(cart), total_amount: currentCartTotal, payment_method: method };
                 fetch('/yi-order/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(orderData) }).then(() => {
-                    alert("Mun samu Order dinka! Zamu kawo maka kaya nan bada dadewa ba.");
+                    alert(dict[currentLang].alertOrderSuccess);
                     cart = []; updateCart(); closeModal('checkoutModal'); closeModal('cryptoModal'); document.getElementById('checkoutForm').reset();
                 });
             }
@@ -526,7 +538,7 @@ def vip_market():
                     email: document.getElementById('cEmail').value, amount: currentCartTotal * 100, currency: 'NGN', channels: ['card', 'bank_transfer', 'ussd'], 
                     ref: 'KDV_' + Math.floor((Math.random() * 1000000000) + 1), 
                     callback: function(res) { saveOrder('Paystack'); },
-                    onClose: function() { alert("An fasa biya."); }
+                    onClose: function() { alert(dict[currentLang].alertPayCancel); }
                 }); handler.openIframe();
             }
 
@@ -535,10 +547,10 @@ def vip_market():
                 closeModal('checkoutModal'); openModal('cryptoModal');
             }
 
-            function copyWallet() { navigator.clipboard.writeText("GDcKRBja7tDKqDftF2WGj3zcwUUBUoUV2xCqaMxfKwzR"); alert("An kwafi asusun!"); }
+            function copyWallet() { navigator.clipboard.writeText("GDcKRBja7tDKqDftF2WGj3zcwUUBUoUV2xCqaMxfKwzR"); alert(dict[currentLang].alertCopied); }
             function confirmCryptoPaid() { saveOrder('Crypto'); }
 
-            function loginAdmin() { if(document.getElementById('adminPass').value === "kanawa123") { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadOrders(); } else { alert("Kuskure!"); } }
+            function loginAdmin() { if(document.getElementById('adminPass').value === "kanawa123") { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadOrders(); } else { alert(dict[currentLang].alertError); } }
             
             function switchAdminTab(tab) {
                 document.getElementById('tabProducts').className = tab === 'products' ? 'admin-tab active' : 'admin-tab';
@@ -549,13 +561,13 @@ def vip_market():
 
             function renderAdminProducts(products) {
                 const div = document.getElementById('adminItems'); div.innerHTML = '';
-                products.forEach(p => { div.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding:10px 0;"><span>${p.name} (₦${p.price})</span><button onclick="if(confirm('Goge?')) fetch('/goge-kaya/${p.id}', {method:'DELETE'}).then(()=>loadProducts())" style="background:red; color:white; border:none; padding:5px; border-radius:5px;">Goge</button></div>`; });
+                products.forEach(p => { div.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding:10px 0;"><span>${p.name} (₦${p.price})</span><button onclick="if(confirm(dict[currentLang].alertDelConfirm)) fetch('/goge-kaya/${p.id}', {method:'DELETE'}).then(()=>loadProducts())" style="background:red; color:white; border:none; padding:5px; border-radius:5px;">Goge</button></div>`; });
             }
 
             function loadOrders() {
                 fetch('/duba-orders/').then(res => res.json()).then(data => {
                     const div = document.getElementById('adminOrders'); div.innerHTML = '';
-                    if(data.length===0) div.innerHTML = "Babu Siyayya tukunna.";
+                    if(data.length===0) div.innerHTML = dict[currentLang].noOrders;
                     data.forEach(o => {
                         let items = JSON.parse(o.items).map(i => i.name).join(", ");
                         div.innerHTML += `<div class="order-card"><b>Suna:</b> ${o.customer_name} <br><b>Waya:</b> ${o.customer_phone} <br><b>Adireshi:</b> ${o.customer_address} <br><b>Kaya:</b> ${items} <br><b>Kudi:</b> ₦${o.total_amount} (${o.payment_method}) <br><small style="color:gray">${o.date_created}</small></div>`;
