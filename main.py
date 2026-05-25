@@ -64,7 +64,7 @@ def delete_product(product_id: int):
     db.close()
     return {"sako": "An goge"}
 
-# --- FRONTEND (ALIEXPRESS UI + BILINGUAL + CRYPTO) ---
+# --- FRONTEND (ALIEXPRESS UI + BILINGUAL + CRYPTO + PAYSTACK TRANSFER) ---
 @app.get("/kasuwa", response_class=HTMLResponse)
 def vip_market():
     html_content = """
@@ -74,6 +74,7 @@ def vip_market():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>Kanawa Digital Ventures</title>
+        <script src="https://js.paystack.co/v1/inline.js"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
             
@@ -227,7 +228,7 @@ def vip_market():
                         <span id="cTotalText">Jimilla:</span> <span style="color:#e62e04;">₦<span id="cartTotal">0</span></span>
                     </div>
                     
-                    <button class="submit-btn" id="btnCheckoutNaira" onclick="checkoutNaira()">💳 BIYA DA NAIRA (PAYSTACK)</button>
+                    <button class="submit-btn" id="btnCheckoutNaira" onclick="checkoutNaira()">💳 BIYA DA NAIRA (TRANSFER/CARD)</button>
                     <button class="crypto-btn" id="btnCheckoutCrypto" onclick="showCryptoPayment()">🪙 BIYA DA CRYPTO (SOL/USDT)</button>
                 </div>
             </div>
@@ -279,9 +280,10 @@ def vip_market():
                     navHome: "Gida", navCat: "Rukunoni", navCart: "Kwando", navAcc: "Account",
                     mPostTitle: "Dora Kayanka A Saukake", lName: "Sunan Kaya", lPrice: "Farashi (₦)", lCat: "Zabi Rukuni", lVendor: "Sunan Shagonka", lPhone: "Lambar Waya", lImg: "Dauki Hoto (Max 2MB)", btnSubmitPost: "POST AD YANZU",
                     mCartTitle: "Kwandon Siyayyarka", cartEmpty: "Babu kaya a kwandonka.", cSubText: "Kudin Kaya:", cShipText: "Kudin Aikawa:", cTotalText: "Jimilla:", 
-                    btnNaira: "💳 BIYA DA NAIRA (PAYSTACK)", btnCrypto: "🪙 BIYA DA CRYPTO (SOL/USDT)",
+                    btnNaira: "💳 BIYA DA NAIRA (TRANSFER/CARD)", btnCrypto: "🪙 BIYA DA CRYPTO (SOL/USDT)",
                     crTitle: "Tsarin Biyan Kudi na Crypto", crDesc: "Tura daidai adadin kudin zuwa wannan asusun na Solana. Zaka iya tura SOL ko USDT (SPL).", crRate: "(Kiyasin Farashi: $1 = ₦1,500)", btnCopy: "📋 Kwafi Asusun (Copy)", btnPaid: "✅ NA TURA KUDIN",
-                    alertAdded: "An saka a kwando!", alertSuccess: "An dora kayanka!", alertFail: "Matsala wajen dorawa", alertNaira: "Za'a tura ka Paystack nan bada dadewa ba!", alertCopied: "An kwafi asusun!", alertCryptoDone: "Mungode! Zamu duba asusunmu mu turo maka kayanka."
+                    alertAdded: "An saka a kwando!", alertSuccess: "An dora kayanka!", alertFail: "Matsala wajen dorawa", alertCopied: "An kwafi asusun!", alertCryptoDone: "Mungode! Zamu duba asusunmu mu turo maka kayanka.",
+                    promptEmail: "Shigar da Imel dinka don samun rasiti:", alertPaySuccess: "Biya ya kammala! Lamba: ", alertPayCancel: "Ka fasa biyan kudin."
                 },
                 'en': {
                     search: "Search phones, shoes...", postAd: "➕ Post Ad",
@@ -291,9 +293,10 @@ def vip_market():
                     navHome: "Home", navCat: "Categories", navCart: "Cart", navAcc: "Account",
                     mPostTitle: "Post Your Ad Easily", lName: "Product Name", lPrice: "Price (₦)", lCat: "Select Category", lVendor: "Shop Name", lPhone: "Phone Number", lImg: "Take Photo (Max 2MB)", btnSubmitPost: "POST AD NOW",
                     mCartTitle: "Your Shopping Cart", cartEmpty: "Your cart is empty.", cSubText: "Subtotal:", cShipText: "Shipping Fee:", cTotalText: "Total:", 
-                    btnNaira: "💳 PAY WITH NAIRA (PAYSTACK)", btnCrypto: "🪙 PAY WITH CRYPTO (SOL/USDT)",
+                    btnNaira: "💳 PAY WITH NAIRA (TRANSFER/CARD)", btnCrypto: "🪙 PAY WITH CRYPTO (SOL/USDT)",
                     crTitle: "Crypto Payment Gateway", crDesc: "Send the exact amount to this Solana wallet. You can send SOL or USDT (SPL).", crRate: "(Est. Rate: $1 = ₦1,500)", btnCopy: "📋 Copy Address", btnPaid: "✅ I HAVE PAID",
-                    alertAdded: "Added to cart!", alertSuccess: "Ad posted successfully!", alertFail: "Error posting ad", alertNaira: "Paystack integration coming soon!", alertCopied: "Wallet address copied!", alertCryptoDone: "Thank you! We will verify the transaction and ship your order."
+                    alertAdded: "Added to cart!", alertSuccess: "Ad posted successfully!", alertFail: "Error posting ad", alertCopied: "Wallet address copied!", alertCryptoDone: "Thank you! We will verify the transaction and ship your order.",
+                    promptEmail: "Enter your email for the receipt:", alertPaySuccess: "Payment complete! Ref: ", alertPayCancel: "Transaction cancelled."
                 }
             };
 
@@ -367,9 +370,31 @@ def vip_market():
                 document.getElementById('cartSubtotal').innerText = '₦' + subtotal; currentCartTotal = subtotal + SHIPPING_FEE; document.getElementById('cartTotal').innerText = currentCartTotal;
             }
 
-            function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
+            function checkoutNaira() { 
+                if(cart.length === 0) { alert(dict[currentLang].cartEmpty); return; } 
+                
+                let userEmail = prompt(dict[currentLang].promptEmail, "kwastoma@email.com");
+                if (!userEmail) return;
 
-            function checkoutNaira() { if(cart.length === 0) { alert(dict[currentLang].cartEmpty); return; } alert(dict[currentLang].alertNaira); }
+                let handler = PaystackPop.setup({
+                    key: 'pk_test_4d6a3f906c1a1fa859539e7b6086d6be3e3b5b1f', 
+                    email: userEmail,
+                    amount: currentCartTotal * 100, 
+                    currency: 'NGN',
+                    channels: ['card', 'bank_transfer', 'ussd'], // AN KARA CHANNELS DIN NAN
+                    ref: 'KDV_' + Math.floor((Math.random() * 1000000000) + 1), 
+                    callback: function(response) {
+                        alert(dict[currentLang].alertPaySuccess + response.reference);
+                        cart = [];
+                        updateCart();
+                        closeModal('cartModal');
+                    },
+                    onClose: function() {
+                        alert(dict[currentLang].alertPayCancel);
+                    }
+                });
+                handler.openIframe();
+            }
 
             function showCryptoPayment() {
                 if(cart.length === 0) { alert(dict[currentLang].cartEmpty); return; }
