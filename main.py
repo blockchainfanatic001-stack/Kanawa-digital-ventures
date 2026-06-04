@@ -103,6 +103,7 @@ def read_orders():
     return orders
 
 # --- FRONTEND ---
+@app.get("/", response_class=HTMLResponse)
 @app.get("/kasuwa", response_class=HTMLResponse)
 def vip_market():
     html_content = """
