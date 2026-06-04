@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, Integer, String, Float, Text
+from sqlalchemy import create_engine, Column, Integer, String, Float, Text, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 import uvicorn
 import os
@@ -32,10 +32,22 @@ class Order(Base):
     customer_phone = Column(String)
     customer_email = Column(String)
     customer_address = Column(String)
-    items = Column(Text) # JSON string of cart items
+    items = Column(Text) 
     total_amount = Column(Float)
     payment_method = Column(String)
     date_created = Column(String)
+
+# SABON TEBUR NA MASU SAYARWA (VENDORS)
+class Vendor(Base):
+    __tablename__ = "vendors"
+    id = Column(Integer, primary_key=True, index=True)
+    business_name = Column(String)
+    full_name = Column(String)
+    phone = Column(String)
+    nin = Column(String)
+    bank_name = Column(String)
+    account_number = Column(String)
+    date_registered = Column(String)
 
 Base.metadata.create_all(bind=engine)
 
@@ -60,6 +72,23 @@ class OrderCreate(BaseModel):
     total_amount: float
     payment_method: str
 
+class VendorCreate(BaseModel):
+    business_name: str
+    full_name: str
+    phone: str
+    nin: str
+    bank_name: str
+    account_number: str
+
+@app.post("/yi-rijista-vendor/")
+def register_vendor(vendor: VendorCreate):
+    db = SessionLocal()
+    new_vendor = Vendor(**vendor.dict(), date_registered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    db.add(new_vendor)
+    db.commit()
+    db.close()
+    return {"sako": "Success"}
+
 @app.post("/saka-kaya/")
 def create_product(product: ProductCreate):
     db = SessionLocal()
@@ -72,7 +101,7 @@ def create_product(product: ProductCreate):
 @app.get("/duba-kaya/")
 def read_products():
     db = SessionLocal()
-    products = db.query(Product).all()
+    products = db.query(Product).order_by(Product.id.desc()).all()
     db.close()
     return products
 
@@ -102,6 +131,13 @@ def read_orders():
     db.close()
     return orders
 
+@app.get("/duba-vendors/")
+def read_vendors():
+    db = SessionLocal()
+    vendors = db.query(Vendor).order_by(Vendor.id.desc()).all()
+    db.close()
+    return vendors
+
 # --- FRONTEND ---
 @app.get("/", response_class=HTMLResponse)
 @app.get("/kasuwa", response_class=HTMLResponse)
@@ -110,11 +146,9 @@ def vip_market():
     <!DOCTYPE html>
     <html lang="ha">
     <head>
-   <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>Kanawa Digital Market</title>
-        <!-- PWA Settings -->
         <link rel="manifest" href="data:application/json,{'name':'Kanawa Digital Market','short_name':'Kanawa','start_url':'/','display':'standalone','background_color':'#ffffff','icons':[{'src':'https://cdn-icons-png.flaticon.com/512/3081/3081559.png','sizes':'192x192','type':'image/png'}]}">
         <script>
             if ('serviceWorker' in navigator) {
@@ -122,31 +156,6 @@ def vip_market():
                     navigator.serviceWorker.register('data:text/javascript,console.log("Service Worker Registered")').catch(err => console.log(err));
                 });
             }
-       <script>
-    let deferredPrompt;
-    const banner = document.getElementById('installBanner');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        banner.style.display = 'block'; // Akwatin zai fito
-        
-        // Zai ɓace bayan daƙiƙa 5 (5000ms)
-        setTimeout(() => {
-            banner.style.display = 'none';
-        }, 5000);
-    });
-
-    function installApp() {
-        banner.style.display = 'none';
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choice) => {
-                deferredPrompt = null;
-            });
-        }
-    }
-</script>
         </script>
         <script src="https://js.paystack.co/v1/inline.js"></script>
         <style>
@@ -205,20 +214,19 @@ def vip_market():
             
             .prod-modal-img { width: 100%; border-radius: 10px; max-height: 300px; object-fit: contain; background: #f0f0f0; margin-bottom: 15px;}
             
-            .admin-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 15px; }
-            .admin-tab { flex: 1; text-align: center; padding: 10px; font-weight: bold; cursor: pointer; color: #666; }
+            .admin-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 15px; overflow-x: auto; scrollbar-width: none;}
+            .admin-tab { flex: 1; text-align: center; padding: 10px; font-weight: bold; cursor: pointer; color: #666; white-space: nowrap;}
             .admin-tab.active { color: #e62e04; border-bottom: 2px solid #e62e04; }
             .order-card { background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 13px;}
         </style>
     </head>
     <body>
-    
-<body>
-    <div id="installBanner" style="display:none; position:fixed; top:20px; left:5%; width:90%; background:#e62e04; color:white; padding:15px; border-radius:10px; z-index:9999; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
-        <p style="margin:0 0 10px 0; font-weight:bold;">Install Kanawa Digital Market!</p>
-        <button onclick="installApp()" style="background:white; color:#e62e04; border:none; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">Install Now</button>
-    </div>
-    
+
+        <div id="installBanner" style="display:none; position:fixed; top:20px; left:5%; width:90%; background:#e62e04; color:white; padding:15px; border-radius:10px; z-index:9999; text-align:center; box-sizing:border-box; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+            <p style="margin:0 0 10px 0; font-weight:bold;">Install Kanawa Digital Market!</p>
+            <button onclick="installApp()" style="background:white; color:#e62e04; border:none; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">Install Now</button>
+        </div>
+
         <div id="sidenavOverlay" class="sidenav-overlay" onclick="closeNav()"></div>
 
         <div id="sideNav" class="sidenav">
@@ -226,7 +234,7 @@ def vip_market():
             <a href="#" onclick="closeNav(); openModal('contactModal')"><span>📞</span> <span id="nContact">Tuntube Mu</span></a>
             <a href="#" onclick="closeNav(); openModal('helpModal')"><span>❓</span> <span id="nHelp">Taimako</span></a>
             <a href="#" onclick="closeNav(); openModal('termsModal')"><span>📜</span> <span id="nTerms">Ka'idojin Aiki</span></a>
-            <a href="#" onclick="closeNav(); openModal('uploadModal')"><span>➕</span> <span id="nSell">Sayar da Kaya</span></a>
+            <a href="#" onclick="closeNav(); checkVendorStatus()"><span>➕</span> <span id="nSell">Sayar da Kaya</span></a>
             <a href="#" onclick="closeNav(); openModal('adminModal')"><span>👤</span> <span id="nAdmin">Dakin Gudanarwa (Admin)</span></a>
         </div>
 
@@ -239,7 +247,7 @@ def vip_market():
         <div class="top-actions">
             <button class="lang-toggle" onclick="changeLanguage('ha')">HA</button>
             <button class="lang-toggle" onclick="changeLanguage('en')">EN</button>
-            <button class="action-btn post" id="btnPostAd" onclick="openModal('uploadModal')">➕ Sayar da Kaya</button>
+            <button class="action-btn post" id="btnPostAd" onclick="checkVendorStatus()">➕ Sayar da Kaya</button>
             <input type="hidden" id="categoryFilter" value="Duka">
         </div>
 
@@ -303,6 +311,23 @@ def vip_market():
                     <div class="form-group"><label id="clAddress">Cikakken Adireshi (Gida/Unguwa)</label><textarea id="cAddress" class="form-control" rows="3" required></textarea></div>
                     <input type="hidden" id="paymentChoice">
                     <button type="submit" class="submit-btn" id="btnProceedPay">Ci Gaba Zuwa Biyan Kudi</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="vendorRegModal" class="modal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="closeModal('vendorRegModal')">&times;</button>
+                <h3 style="margin-top:0;" id="mRegTitle">Rijistar Sabon Vendor</h3>
+                <p style="font-size:13px; color:#666; margin-top:-10px;">Daure ka cike wadannan bayanan domin samun amincewa (Verification).</p>
+                <form id="vendorRegForm">
+                    <div class="form-group"><label>Sunan Shagonka / Kasuwanci</label><input type="text" id="vBizName" class="form-control" required></div>
+                    <div class="form-group"><label>Cikakken Sunanka</label><input type="text" id="vFullName" class="form-control" required></div>
+                    <div class="form-group"><label>Lambar Waya (WhatsApp)</label><input type="number" id="vPhone" class="form-control" required></div>
+                    <div class="form-group"><label>Lambar NIN</label><input type="number" id="vNIN" class="form-control" required></div>
+                    <div class="form-group"><label>Sunan Banki (Misali: OPay, Palmpay)</label><input type="text" id="vBank" class="form-control" required></div>
+                    <div class="form-group"><label>Lambar Asusu (Account Number)</label><input type="number" id="vAccount" class="form-control" required></div>
+                    <button type="submit" class="submit-btn" id="btnSubmitReg">YI RIJISTA YANZU</button>
                 </form>
             </div>
         </div>
@@ -379,9 +404,11 @@ def vip_market():
                     <div class="admin-tabs">
                         <div class="admin-tab active" id="tabProducts" onclick="switchAdminTab('products')">Kayayyaki</div>
                         <div class="admin-tab" id="tabOrders" onclick="switchAdminTab('orders')">Siyayya</div>
+                        <div class="admin-tab" id="tabVendors" onclick="switchAdminTab('vendors')">Masu Sayarwa</div>
                     </div>
                     <div id="adminItems"></div>
                     <div id="adminOrders" style="display:none;"></div>
+                    <div id="adminVendors" style="display:none;"></div>
                 </div>
             </div>
         </div>
@@ -402,7 +429,6 @@ def vip_market():
                     mContactTitle: "Tuntube Mu", mContactBody: "Kira ko WhatsApp: 09166614894", mHelpTitle: "Taimako", mHelpBody: "Zabi kaya, saka a kwando, cike adireshinka, sannan ka biya. Zamu kawo maka kofar gida.", mTermsTitle: "Ka'idojin Aiki", mTermsBody: "Kudinka yana cikin aminci. Muna cajin N500 kudin aikawa a Gombe.",
                     mAdminTitle: "Dakin Gudanarwa (Admin)", btnAdminLogin: "Shiga", tabProducts: "Kayayyaki", tabOrders: "Siyayya",
                     mCatTitleModal: "Zabi Rukuni", btnCatAll: "Dukkan Rukunoni", btnCatPhones: "📱 Wayoyi & Kwamfutoci", btnCatFashion: "👗 Kayan Sawa", btnCatVehicles: "🚗 Ababen Hawa", btnCatFood: "🍅 Kayan Abinci", btnCatElectronics: "📺 Kayan Lantarki", btnCatHome: "🪑 Kayan Gida", btnCatBeauty: "💄 Kayan Kwalliya", btnCatOthers: "📦 Wasu",
-                    // ALERTS
                     alertImgSize: "Hoto yayi nauyi (Max 2MB)", alertAdPosted: "An dora kayanka!", alertCartAdd: "An saka a kwando!", alertCartEmpty: "Kwando fanko ne!", alertOrderSuccess: "Mun samu Order dinka! Zamu kawo maka kaya nan bada dadewa ba.", alertPayCancel: "An fasa biya.", alertCopied: "An kwafi asusun!", alertError: "Kuskure! Password ba daidai ba.", alertDelConfirm: "Goge wannan kayan?", noOrders: "Babu Siyayya tukunna."
                 },
                 'en': { 
@@ -418,11 +444,12 @@ def vip_market():
                     mContactTitle: "Contact Us", mContactBody: "Call or WhatsApp: 09166614894", mHelpTitle: "Help Center", mHelpBody: "Select an item, add to cart, fill your address, and pay securely. We deliver to your door.", mTermsTitle: "Terms & Conditions", mTermsBody: "Your payment is secure. We charge a flat N500 delivery fee within Gombe.",
                     mAdminTitle: "Admin Panel", btnAdminLogin: "Login", tabProducts: "Products", tabOrders: "Orders",
                     mCatTitleModal: "Select Category", btnCatAll: "All Categories", btnCatPhones: "📱 Phones & Computers", btnCatFashion: "👗 Fashion", btnCatVehicles: "🚗 Vehicles", btnCatFood: "🍅 Food & Groceries", btnCatElectronics: "📺 Electronics", btnCatHome: "🪑 Home & Furniture", btnCatBeauty: "💄 Health & Beauty", btnCatOthers: "📦 Others",
-                    // ALERTS
                     alertImgSize: "Image too large (Max 2MB)", alertAdPosted: "Ad posted successfully!", alertCartAdd: "Added to cart!", alertCartEmpty: "Cart is empty!", alertOrderSuccess: "Order received! We will deliver your items soon.", alertPayCancel: "Payment cancelled.", alertCopied: "Wallet address copied!", alertError: "Error! Incorrect password.", alertDelConfirm: "Delete this item?", noOrders: "No orders yet."
                 }
             };
-            let currentLang = 'ha'; let allProducts = []; let cart = []; const SHIPPING_FEE = 500; let currentCartTotal = 0;
+            let currentLang = 'ha'; let allProducts = []; 
+            let cart = JSON.parse(localStorage.getItem('kanawa_cart') || '[]'); 
+            const SHIPPING_FEE = 500; let currentCartTotal = 0;
 
             function openNav() { document.getElementById("sideNav").style.left = "0"; document.getElementById("sidenavOverlay").style.display = "block"; }
             function closeNav() { document.getElementById("sideNav").style.left = "-260px"; document.getElementById("sidenavOverlay").style.display = "none"; }
@@ -431,53 +458,66 @@ def vip_market():
                 currentLang = lang; 
                 document.getElementById('searchInput').placeholder = dict[lang].search;
                 document.getElementById('btnPostAd').innerText = dict[lang].postAd;
-                
-                // Sabbin Abubuwa (Banner & Loading)
                 document.getElementById('bannerTitle').innerText = dict[lang].bannerTitle;
                 document.getElementById('bannerSub').innerText = dict[lang].bannerSub;
                 if(document.getElementById('loadingTxt')) document.getElementById('loadingTxt').innerText = dict[lang].loading;
-                
                 document.getElementById('navHome').innerText = dict[lang].navHome; document.getElementById('navCat').innerText = dict[lang].navCat; document.getElementById('navCart').innerText = dict[lang].navCart;
-                
                 document.getElementById('nContact').innerText = dict[lang].nContact; document.getElementById('nHelp').innerText = dict[lang].nHelp; document.getElementById('nTerms').innerText = dict[lang].nTerms; document.getElementById('nSell').innerText = dict[lang].nSell; document.getElementById('nAdmin').innerText = dict[lang].nAdmin;
-                
                 document.getElementById('mPostTitle').innerText = dict[lang].mPostTitle; document.getElementById('lName').innerText = dict[lang].lName; document.getElementById('lPrice').innerText = dict[lang].lPrice; document.getElementById('lCat').innerText = dict[lang].lCat; document.getElementById('lDesc').innerText = dict[lang].lDesc; document.getElementById('lVendor').innerText = dict[lang].lVendor; document.getElementById('lPhone').innerText = dict[lang].lPhone; document.getElementById('lImg').innerText = dict[lang].lImg; document.getElementById('btnSubmitPost').innerText = dict[lang].btnSubmitPost;
-                
                 document.getElementById('mCartTitle').innerText = dict[lang].mCartTitle; document.getElementById('cSubText').innerText = dict[lang].cSubText; document.getElementById('cShipText').innerText = dict[lang].cShipText; document.getElementById('cTotalText').innerText = dict[lang].cTotalText; document.getElementById('btnCheckoutNaira').innerText = dict[lang].btnNaira; document.getElementById('btnCheckoutCrypto').innerText = dict[lang].btnCrypto;
-                
                 document.getElementById('chkTitle').innerText = dict[lang].chkTitle; document.getElementById('clName').innerText = dict[lang].clName; document.getElementById('clPhone').innerText = dict[lang].clPhone; document.getElementById('clEmail').innerText = dict[lang].clEmail; document.getElementById('clAddress').innerText = dict[lang].clAddress; document.getElementById('btnProceedPay').innerText = dict[lang].btnProceedPay;
-                
                 document.getElementById('crTitle').innerText = dict[lang].crTitle; document.getElementById('btnCopyWallet').innerText = dict[lang].btnCopy; document.getElementById('btnPaidCrypto').innerText = dict[lang].btnPaid;
-                
                 document.getElementById('pdVendorText').innerText = dict[lang].pdVendorText; document.getElementById('pdAddToCart').innerText = dict[lang].pdAddToCart;
-                
                 document.getElementById('mContactTitle').innerText = dict[lang].mContactTitle; document.getElementById('mContactBody').innerText = dict[lang].mContactBody;
                 document.getElementById('mHelpTitle').innerText = dict[lang].mHelpTitle; document.getElementById('mHelpBody').innerText = dict[lang].mHelpBody;
                 document.getElementById('mTermsTitle').innerText = dict[lang].mTermsTitle; document.getElementById('mTermsBody').innerText = dict[lang].mTermsBody;
-                
                 document.getElementById('mAdminTitle').innerText = dict[lang].mAdminTitle; document.getElementById('btnAdminLogin').innerText = dict[lang].btnAdminLogin; document.getElementById('tabProducts').innerText = dict[lang].tabProducts; document.getElementById('tabOrders').innerText = dict[lang].tabOrders;
-                
                 document.getElementById('mCatTitleModal').innerText = dict[lang].mCatTitleModal; document.getElementById('btnCatAll').innerText = dict[lang].btnCatAll; 
                 document.getElementById('btnCatPhones').innerText = dict[lang].btnCatPhones; document.getElementById('btnCatFashion').innerText = dict[lang].btnCatFashion; 
                 document.getElementById('btnCatVehicles').innerText = dict[lang].btnCatVehicles; document.getElementById('btnCatFood').innerText = dict[lang].btnCatFood; 
                 document.getElementById('btnCatElectronics').innerText = dict[lang].btnCatElectronics; document.getElementById('btnCatHome').innerText = dict[lang].btnCatHome; 
                 document.getElementById('btnCatBeauty').innerText = dict[lang].btnCatBeauty; document.getElementById('btnCatOthers').innerText = dict[lang].btnCatOthers;
-                
-                // Form Options Translation
-                document.getElementById('optPhones').innerText = dict[lang].btnCatPhones.substring(3);
-                document.getElementById('optFashion').innerText = dict[lang].btnCatFashion.substring(3);
-                document.getElementById('optVehicles').innerText = dict[lang].btnCatVehicles.substring(3);
-                document.getElementById('optFood').innerText = dict[lang].btnCatFood.substring(3);
-                document.getElementById('optElectronics').innerText = dict[lang].btnCatElectronics.substring(3);
-                document.getElementById('optHome').innerText = dict[lang].btnCatHome.substring(3);
-                document.getElementById('optBeauty').innerText = dict[lang].btnCatBeauty.substring(3);
-                document.getElementById('optOthers').innerText = dict[lang].btnCatOthers.substring(3);
+                document.getElementById('optPhones').innerText = dict[lang].btnCatPhones.substring(3); document.getElementById('optFashion').innerText = dict[lang].btnCatFashion.substring(3); document.getElementById('optVehicles').innerText = dict[lang].btnCatVehicles.substring(3); document.getElementById('optFood').innerText = dict[lang].btnCatFood.substring(3); document.getElementById('optElectronics').innerText = dict[lang].btnCatElectronics.substring(3); document.getElementById('optHome').innerText = dict[lang].btnCatHome.substring(3); document.getElementById('optBeauty').innerText = dict[lang].btnCatBeauty.substring(3); document.getElementById('optOthers').innerText = dict[lang].btnCatOthers.substring(3);
 
                 filterProducts(); updateCart();
             }
 
             function openModal(id) { document.getElementById(id).style.display = 'flex'; }
             function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+            // DUBA KO YAYI RIJISTA KAFIN YA DORA KAYA
+            function checkVendorStatus() {
+                let isRegistered = localStorage.getItem('kdv_vendor_registered');
+                if (isRegistered === 'true') {
+                    openModal('uploadModal');
+                } else {
+                    openModal('vendorRegModal');
+                }
+            }
+
+            // AIKA BAYANAN RIJISTAR VENDOR
+            document.getElementById('vendorRegForm').onsubmit = function(e) {
+                e.preventDefault(); 
+                document.getElementById('btnSubmitReg').disabled = true;
+                const data = { 
+                    business_name: document.getElementById('vBizName').value, 
+                    full_name: document.getElementById('vFullName').value, 
+                    phone: document.getElementById('vPhone').value, 
+                    nin: document.getElementById('vNIN').value, 
+                    bank_name: document.getElementById('vBank').value, 
+                    account_number: document.getElementById('vAccount').value 
+                };
+                fetch('/yi-rijista-vendor/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+                .then(res => res.json())
+                .then(res => {
+                    localStorage.setItem('kdv_vendor_registered', 'true');
+                    alert(currentLang === 'ha' ? "An yi rijista cikin nasara! Yanzu zaka iya dora kaya." : "Registration successful! You can now post ads.");
+                    closeModal('vendorRegModal');
+                    document.getElementById('vendorRegForm').reset();
+                    document.getElementById('btnSubmitReg').disabled = false;
+                    openModal('uploadModal');
+                });
+            };
 
             document.getElementById("image_file").addEventListener("change", function() {
                 const file = this.files[0];
@@ -529,6 +569,7 @@ def vip_market():
             function addToCart(id, name, price) { cart.push({id, name, price}); updateCart(); alert(dict[currentLang].alertCartAdd); }
 
             function updateCart() {
+                localStorage.setItem('kanawa_cart', JSON.stringify(cart));
                 document.getElementById('cartCount').innerText = cart.length; 
                 const div = document.getElementById('cartItems');
                 if(cart.length === 0) { 
@@ -538,22 +579,12 @@ def vip_market():
                     currentCartTotal = 0; 
                     return; 
                 }
-                let sub = 0;
-                let cartHtml = '';
-                cart.forEach((item, i) => { 
-                    sub += item.price; 
-                    cartHtml += `<div class="cart-item"><div><b>${item.name}</b><br><span style="color:red">₦${item.price}</span></div><button class="remove-btn" onclick="removeFromCart(${i})">X</button></div>`; 
-                });
-                div.innerHTML = cartHtml;
-                document.getElementById('cartSubtotal').innerText = '₦' + sub; 
-                currentCartTotal = sub + SHIPPING_FEE; 
-                document.getElementById('cartTotal').innerText = currentCartTotal;
+                let sub = 0; let cartHtml = '';
+                cart.forEach((item, i) => { sub += item.price; cartHtml += `<div class="cart-item"><div><b>${item.name}</b><br><span style="color:red">₦${item.price}</span></div><button class="remove-btn" onclick="removeFromCart(${i})">X</button></div>`; });
+                div.innerHTML = cartHtml; document.getElementById('cartSubtotal').innerText = '₦' + sub; currentCartTotal = sub + SHIPPING_FEE; document.getElementById('cartTotal').innerText = currentCartTotal;
             }
 
-            function removeFromCart(index) {
-                cart.splice(index, 1);
-                updateCart();
-            }
+            function removeFromCart(index) { cart.splice(index, 1); updateCart(); }
 
             function initCheckout(method) {
                 if(cart.length === 0) return alert(dict[currentLang].alertCartEmpty);
@@ -592,13 +623,15 @@ def vip_market():
             function copyWallet() { navigator.clipboard.writeText("GDcKRBja7tDKqDftF2WGj3zcwUUBUoUV2xCqaMxfKwzR"); alert(dict[currentLang].alertCopied); }
             function confirmCryptoPaid() { saveOrder('Crypto'); }
 
-            function loginAdmin() { if(document.getElementById('adminPass').value === "kanawa123") { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadOrders(); } else { alert(dict[currentLang].alertError); } }
+            function loginAdmin() { if(document.getElementById('adminPass').value === "kanawa123") { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadOrders(); loadVendors(); } else { alert(dict[currentLang].alertError); } }
             
             function switchAdminTab(tab) {
                 document.getElementById('tabProducts').className = tab === 'products' ? 'admin-tab active' : 'admin-tab';
                 document.getElementById('tabOrders').className = tab === 'orders' ? 'admin-tab active' : 'admin-tab';
+                document.getElementById('tabVendors').className = tab === 'vendors' ? 'admin-tab active' : 'admin-tab';
                 document.getElementById('adminItems').style.display = tab === 'products' ? 'block' : 'none';
                 document.getElementById('adminOrders').style.display = tab === 'orders' ? 'block' : 'none';
+                document.getElementById('adminVendors').style.display = tab === 'vendors' ? 'block' : 'none';
             }
 
             function renderAdminProducts(products) {
@@ -615,6 +648,34 @@ def vip_market():
                         div.innerHTML += `<div class="order-card"><b>Suna:</b> ${o.customer_name} <br><b>Waya:</b> ${o.customer_phone} <br><b>Adireshi:</b> ${o.customer_address} <br><b>Kaya:</b> ${items} <br><b>Kudi:</b> ₦${o.total_amount} (${o.payment_method}) <br><small style="color:gray">${o.date_created}</small></div>`;
                     });
                 });
+            }
+
+            // SABON TSARI DON DUBA VENDORS A DAKIN ADMIN
+            function loadVendors() {
+                fetch('/duba-vendors/').then(res => res.json()).then(data => {
+                    const div = document.getElementById('adminVendors'); div.innerHTML = '';
+                    if(data.length===0) div.innerHTML = "Babu masu sayarwa (vendors) tukunna.";
+                    data.forEach(v => {
+                        div.innerHTML += `<div class="order-card"><b>Shago:</b> ${v.business_name} <br><b>Suna:</b> ${v.full_name} <br><b>Waya:</b> ${v.phone} <br><b>NIN:</b> ${v.nin} <br><b>Asusu:</b> ${v.bank_name} - ${v.account_number} <br><small style="color:gray">Kwanan wata: ${v.date_registered}</small></div>`;
+                    });
+                });
+            }
+
+            // INSTALL APP SCRIPT
+            let deferredPrompt;
+            const banner = document.getElementById('installBanner');
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                banner.style.display = 'block'; 
+                setTimeout(() => { banner.style.display = 'none'; }, 5000);
+            });
+            function installApp() {
+                banner.style.display = 'none';
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choice) => { deferredPrompt = null; });
+                }
             }
 
             window.onload = function() { changeLanguage('ha'); loadProducts(); };
