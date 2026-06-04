@@ -110,9 +110,19 @@ def vip_market():
     <!DOCTYPE html>
     <html lang="ha">
     <head>
+   <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>Kanawa Digital Market</title>
+        <!-- PWA Settings -->
+        <link rel="manifest" href="data:application/json,{'name':'Kanawa Digital Market','short_name':'Kanawa','start_url':'/','display':'standalone','background_color':'#ffffff','icons':[{'src':'https://cdn-icons-png.flaticon.com/512/3081/3081559.png','sizes':'192x192','type':'image/png'}]}">
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('data:text/javascript,console.log("Service Worker Registered")').catch(err => console.log(err));
+                });
+            }
+        </script>
         <script src="https://js.paystack.co/v1/inline.js"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
