@@ -37,7 +37,6 @@ class Order(Base):
     payment_method = Column(String)
     date_created = Column(String)
 
-# SABON TEBUR NA MASU SAYARWA (VENDORS) - Yanzu da tsarin 'is_verified'
 class Vendor(Base):
     __tablename__ = "vendors"
     id = Column(Integer, primary_key=True, index=True)
@@ -47,7 +46,7 @@ class Vendor(Base):
     nin = Column(String)
     bank_name = Column(String)
     account_number = Column(String)
-    is_verified = Column(Boolean, default=False) # Nan ne kake amincewa da su
+    is_verified = Column(Boolean, default=False)
     date_registered = Column(String)
 
 Base.metadata.create_all(bind=engine)
@@ -84,12 +83,10 @@ class VendorCreate(BaseModel):
 @app.post("/yi-rijista-vendor/")
 def register_vendor(vendor: VendorCreate):
     db = SessionLocal()
-    # Duba ko wannan lambar ta taba yin rijista
     existing = db.query(Vendor).filter(Vendor.phone == vendor.phone).first()
     if existing:
         db.close()
-        return {"sako": "Wannan lambar wayar ta riga ta yi rijista."}
-        
+        return {"sako": "exist"}
     new_vendor = Vendor(**vendor.dict(), is_verified=False, date_registered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     db.add(new_vendor)
     db.commit()
@@ -177,72 +174,56 @@ def vip_market():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>Kanawa Digital Market</title>
-        <!-- PWA Settings -->
         <link rel="manifest" href="data:application/json,{'name':'Kanawa Digital Market','short_name':'Kanawa','start_url':'/','display':'standalone','background_color':'#ffffff','icons':[{'src':'https://cdn-icons-png.flaticon.com/512/3081/3081559.png','sizes':'192x192','type':'image/png'}]}">
         <script>
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('data:text/javascript,console.log("Service Worker Registered")').catch(err => console.log(err));
-                });
+                window.addEventListener('load', () => { navigator.serviceWorker.register('data:text/javascript,console.log("SW Registered")').catch(err => console.log(err)); });
             }
         </script>
         <script src="https://js.paystack.co/v1/inline.js"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
             body { font-family: 'Roboto', sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; padding-bottom: 70px; color: #333; overflow-x: hidden; }
-            
             .top-header { background: #fff; padding: 10px 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px;}
             .menu-icon { font-size: 24px; cursor: pointer; color: #333; padding-right: 5px; font-weight: bold;}
             .logo-text { font-size: 18px; font-weight: 900; color: #e62e04; margin: 0; letter-spacing: -0.5px; white-space: nowrap;}
             .search-box { flex: 1; background: #f0f2f5; border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; border: 1px solid #e0e0e0;}
             .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; }
-            
             .sidenav { height: 100%; width: 260px; position: fixed; z-index: 300; top: 0; left: -260px; background-color: #fff; overflow-x: hidden; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column;}
             .sidenav-header { background: #e62e04; color: white; padding: 25px 20px; font-size: 18px; font-weight: 900; position: relative;}
             .sidenav-close { position: absolute; top: 15px; right: 15px; font-size: 24px; color: white; cursor: pointer; background: none; border: none; font-weight: bold;}
             .sidenav a { padding: 15px 20px; text-decoration: none; font-size: 15px; color: #333; display: block; border-bottom: 1px solid #eee; transition: 0.2s; display: flex; align-items: center; gap: 15px; font-weight: bold;}
             .sidenav a:hover { background-color: #f9f9f9; color: #e62e04; }
             .sidenav-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 250; }
-
             .top-actions { display: flex; padding: 10px 15px; background: #fff; gap: 10px; overflow-x: auto; scrollbar-width: none; align-items: center;}
             .action-btn { background: #ffebee; color: #e62e04; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 13px; white-space: nowrap; cursor: pointer; }
             .action-btn.post { background: #e62e04; color: white; }
             .lang-toggle { background: #333; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer;}
-
             .banner-section { margin: 10px 15px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); border-radius: 12px; padding: 20px; color: #d81b60; font-weight: bold; font-size: 18px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
-
             .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 10px 15px; }
             .card { background: #fff; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; border: 1px solid #f0f0f0; transition: transform 0.2s;}
             .card-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f9f9f9; }
             .card-details { padding: 10px; }
             .card-title { font-size: 13px; color: #333; margin: 0 0 5px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3;}
             .card-price { color: #111; font-size: 18px; font-weight: 900; margin-bottom: 2px; }
-            
             .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #eee; z-index: 100;}
             .nav-item { display: flex; flex-direction: column; align-items: center; color: #666; text-decoration: none; font-size: 11px; cursor: pointer; width: 33.33%;}
             .nav-item.active { color: #e62e04; font-weight: bold; }
             .nav-icon { font-size: 22px; margin-bottom: 3px; }
             .cart-badge { background: #e62e04; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; position: absolute; margin-left: 15px; margin-top: -5px;}
-
             .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 400; justify-content: center; align-items: flex-end;}
             .modal-content { background: #fff; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; max-height: 90vh; overflow-y: auto;}
             .close-modal { float: right; font-size: 24px; font-weight: bold; color: #333; cursor: pointer; border: none; background: none;}
-            
             .form-group { margin-bottom: 15px; }
             .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: bold;}
             .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; background: #f9f9f9; outline: none;}
-            
             .submit-btn { background: #e62e04; color: #fff; width: 100%; padding: 15px; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; margin-top: 10px; cursor: pointer;}
             .crypto-btn { background: #14F195; color: #111; width: 100%; padding: 15px; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; margin-top: 10px; cursor: pointer;}
-            
             .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee;}
             .remove-btn { background: #ffebee; border: none; padding: 5px 15px; border-radius: 5px; color: #e62e04; font-weight: bold; cursor: pointer; font-size: 14px;}
-            
             .whatsapp-float { position: fixed; bottom: 80px; right: 20px; background-color: #25d366; border-radius: 50%; width: 55px; height: 55px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; text-decoration: none;}
             .whatsapp-float svg { width: 32px; height: 32px; fill: white; }
-            
             .prod-modal-img { width: 100%; border-radius: 10px; max-height: 300px; object-fit: contain; background: #f0f0f0; margin-bottom: 15px;}
-            
             .admin-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 15px; overflow-x: auto; scrollbar-width: none;}
             .admin-tab { flex: 1; text-align: center; padding: 10px; font-weight: bold; cursor: pointer; color: #666; white-space: nowrap;}
             .admin-tab.active { color: #e62e04; border-bottom: 2px solid #e62e04; }
@@ -252,8 +233,8 @@ def vip_market():
     <body>
 
         <div id="installBanner" style="display:none; position:fixed; top:20px; left:5%; width:90%; background:#e62e04; color:white; padding:15px; border-radius:10px; z-index:9999; text-align:center; box-sizing:border-box; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
-            <p style="margin:0 0 10px 0; font-weight:bold;">Install Kanawa Digital Market!</p>
-            <button onclick="installApp()" style="background:white; color:#e62e04; border:none; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">Install Now</button>
+            <p style="margin:0 0 10px 0; font-weight:bold;" id="pwaTitle">Install Kanawa Digital Market!</p>
+            <button onclick="installApp()" id="pwaBtn" style="background:white; color:#e62e04; border:none; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">Install Now</button>
         </div>
 
         <div id="sidenavOverlay" class="sidenav-overlay" onclick="closeNav()"></div>
@@ -264,7 +245,7 @@ def vip_market():
             <a href="#" onclick="closeNav(); openModal('helpModal')"><span>❓</span> <span id="nHelp">Taimako</span></a>
             <a href="#" onclick="closeNav(); openModal('termsModal')"><span>📜</span> <span id="nTerms">Ka'idojin Aiki</span></a>
             <a href="#" onclick="closeNav(); initiateVendorCheck()"><span>➕</span> <span id="nSell">Sayar da Kaya</span></a>
-            <a href="#" onclick="closeNav(); openModal('adminModal')"><span>👤</span> <span id="nAdmin">Dakin Gudanarwa (Admin)</span></a>
+            <a href="#" onclick="closeNav(); openModal('adminModal')"><span>👤</span> <span id="nAdmin">Dakin Gudanarwa</span></a>
         </div>
 
         <div class="top-header">
@@ -349,14 +330,14 @@ def vip_market():
             <div class="modal-content">
                 <button class="close-modal" onclick="closeModal('vendorRegModal')">&times;</button>
                 <h3 style="margin-top:0;" id="mRegTitle">Rijistar Sabon Vendor</h3>
-                <p style="font-size:13px; color:#666; margin-top:-10px;">Daure ka cike wadannan bayanan domin samun amincewa (Verification).</p>
+                <p style="font-size:13px; color:#666; margin-top:-10px;" id="mRegSub">Daure ka cike wadannan bayanan domin samun amincewa (Verification).</p>
                 <form id="vendorRegForm">
-                    <div class="form-group"><label>Sunan Shagonka / Kasuwanci</label><input type="text" id="vBizName" class="form-control" required></div>
-                    <div class="form-group"><label>Cikakken Sunanka</label><input type="text" id="vFullName" class="form-control" required></div>
-                    <div class="form-group"><label>Lambar Waya (WhatsApp)</label><input type="number" id="vPhone" class="form-control" required></div>
-                    <div class="form-group"><label>Lambar NIN</label><input type="number" id="vNIN" class="form-control" required></div>
-                    <div class="form-group"><label>Sunan Banki</label><input type="text" id="vBank" class="form-control" required></div>
-                    <div class="form-group"><label>Lambar Asusu (Account Number)</label><input type="number" id="vAccount" class="form-control" required></div>
+                    <div class="form-group"><label id="lvBizName">Sunan Shagonka / Kasuwanci</label><input type="text" id="vBizName" class="form-control" required></div>
+                    <div class="form-group"><label id="lvFullName">Cikakken Sunanka</label><input type="text" id="vFullName" class="form-control" required></div>
+                    <div class="form-group"><label id="lvPhone">Lambar Waya (WhatsApp)</label><input type="number" id="vPhone" class="form-control" required></div>
+                    <div class="form-group"><label id="lvNIN">Lambar NIN</label><input type="number" id="vNIN" class="form-control" required></div>
+                    <div class="form-group"><label id="lvBank">Sunan Banki</label><input type="text" id="vBank" class="form-control" required></div>
+                    <div class="form-group"><label id="lvAccount">Lambar Asusu (Account Number)</label><input type="number" id="vAccount" class="form-control" required></div>
                     <button type="submit" class="submit-btn" id="btnSubmitReg">YI RIJISTA</button>
                 </form>
             </div>
@@ -384,8 +365,7 @@ def vip_market():
                     </div>
                     <div class="form-group"><label id="lDesc">Bayanin Kaya</label><textarea id="desc" class="form-control" rows="2" required></textarea></div>
                     <div class="form-group"><label id="lVendor">Sunan Shagonka</label><input type="text" id="vendor" class="form-control" required></div>
-                    <!-- An canza lPhone zuwa readonly domin ya dinga daukar phone din da aka yi rijista da shi -->
-                    <div class="form-group"><label id="lPhone">Lambar Waya (Za a cike da kanta)</label><input type="number" id="phone" class="form-control" readonly required></div>
+                    <div class="form-group"><label id="lPhoneR">Lambar Waya (Za a cike da kanta)</label><input type="number" id="phone" class="form-control" readonly required></div>
                     <div class="form-group"><label id="lImg">Dauki Hoto (Max 2MB)</label><input type="file" id="image_file" class="form-control" accept="image/*" required><input type="hidden" id="base64String"></div>
                     <button type="submit" class="submit-btn" id="btnSubmitPost">POST AD YANZU</button>
                 </form>
@@ -414,7 +394,7 @@ def vip_market():
                 <div class="crypto-box">
                     <h2 style="margin:0; color:#111;">$<span id="cryptoUsdTotal">0.00</span></h2>
                     <div class="wallet-addr" id="walletAddr">GDcKRBja7tDKqDftF2WGj3zcwUUBUoUV2xCqaMxfKwzR</div>
-                    <button class="submit-btn" style="background:#333; padding:10px;" id="btnCopyWallet" onclick="copyWallet()">📋 Kwafi Asusun (Copy)</button>
+                    <button class="submit-btn" style="background:#333; padding:10px;" id="btnCopyWallet" onclick="copyWallet()">📋 Kwafi Asusun</button>
                 </div>
                 <button class="crypto-btn" style="margin-top:20px;" id="btnPaidCrypto" onclick="confirmCryptoPaid()">✅ NA TURA KUDIN</button>
             </div>
@@ -427,7 +407,7 @@ def vip_market():
         <div id="adminModal" class="modal">
             <div class="modal-content" style="height: 90vh;">
                 <button class="close-modal" onclick="closeModal('adminModal')">&times;</button>
-                <h3 style="margin-top:0;" id="mAdminTitle">Dakin Gudanarwa (Admin)</h3>
+                <h3 style="margin-top:0;" id="mAdminTitle">Dakin Gudanarwa</h3>
                 <div id="adminAuth">
                     <input type="password" id="adminPass" class="form-control" placeholder="Password: kanawa123">
                     <button class="submit-btn" id="btnAdminLogin" onclick="loginAdmin()">Shiga</button>
@@ -436,8 +416,7 @@ def vip_market():
                     <div class="admin-tabs">
                         <div class="admin-tab active" id="tabProducts" onclick="switchAdminTab('products')">Kayayyaki</div>
                         <div class="admin-tab" id="tabOrders" onclick="switchAdminTab('orders')">Siyayya</div>
-                        <!-- Tab na duba masu sayarwa (Vendors) -->
-                        <div class="admin-tab" id="tabVendors" onclick="switchAdminTab('vendors')">Vendors</div>
+                        <div class="admin-tab" id="tabVendors" onclick="switchAdminTab('vendors')">Masu Sayarwa</div>
                     </div>
                     <div id="adminItems"></div>
                     <div id="adminOrders" style="display:none;"></div>
@@ -452,24 +431,38 @@ def vip_market():
                 'ha': { 
                     search: "Bincika nan...", postAd: "➕ Sayar da Kaya", empty: "Babu kayan da ya dace.", ship: "Shipping: ₦500",
                     bannerTitle: "🔥 Zafafan Kayayyaki", bannerSub: "Kudin Aikawa ₦500 kacal!", loading: "Ana lodo kayayyaki...",
-                    navHome: "Gida", navCat: "Rukunoni", navCart: "Kwando",
+                    navHome: "Gida", navCat: "Rukunoni", navCart: "Kwando", pwaTitle: "Install Kanawa Digital Market!", pwaBtn: "Install Now",
                     nContact: "Tuntube Mu", nHelp: "Taimako", nTerms: "Ka'idojin Aiki", nSell: "Sayar da Kaya", nAdmin: "Dakin Gudanarwa",
-                    mPostTitle: "Dora Kayanka A Saukake", lName: "Sunan Kaya", lPrice: "Farashi (₦)", lCat: "Zabi Rukuni", lDesc: "Bayanin Kaya", lVendor: "Sunan Shagonka", lPhone: "Lambar Waya", lImg: "Dauki Hoto (Max 2MB)", btnSubmitPost: "POST AD YANZU",
+                    mPostTitle: "Dora Kayanka A Saukake", lName: "Sunan Kaya", lPrice: "Farashi (₦)", lCat: "Zabi Rukuni", lDesc: "Bayanin Kaya", lVendor: "Sunan Shagonka", lPhoneR: "Lambar Waya (Za a cike da kanta)", lImg: "Dauki Hoto (Max 2MB)", btnSubmitPost: "POST AD YANZU",
                     mCartTitle: "Kwandon Siyayyarka", cSubText: "Kudin Kaya:", cShipText: "Kudin Aikawa:", cTotalText: "Jimilla:", btnNaira: "💳 BIYA DA NAIRA", btnCrypto: "🪙 BIYA DA CRYPTO",
                     chkTitle: "Bayanan Isar Da Kaya", clName: "Cikakken Suna", clPhone: "Lambar Waya", clEmail: "Imel (Don samun rasiti)", clAddress: "Cikakken Adireshi (Gida/Unguwa)", btnProceedPay: "Ci Gaba Zuwa Biyan Kudi",
-                    crTitle: "Tsarin Biyan Kudi na Crypto", btnCopy: "📋 Kwafi Asusun (Copy)", btnPaid: "✅ NA TURA KUDIN",
+                    crTitle: "Tsarin Biyan Kudi na Crypto", btnCopy: "📋 Kwafi Asusun", btnPaid: "✅ NA TURA KUDIN",
                     pdVendorText: "Shago / Vendor:", pdAddToCart: "Saka a Kwando",
                     mContactTitle: "Tuntube Mu", mContactBody: "Kira ko WhatsApp: 09166614894", mHelpTitle: "Taimako", mHelpBody: "Zabi kaya, saka a kwando, cike adireshinka, sannan ka biya. Zamu kawo maka kofar gida.", mTermsTitle: "Ka'idojin Aiki", mTermsBody: "Kudinka yana cikin aminci. Muna cajin N500 kudin aikawa a Gombe.",
-                    mAdminTitle: "Dakin Gudanarwa (Admin)", btnAdminLogin: "Shiga", tabProducts: "Kayayyaki", tabOrders: "Siyayya",
+                    mAdminTitle: "Dakin Gudanarwa", btnAdminLogin: "Shiga", tabProducts: "Kayayyaki", tabOrders: "Siyayya", tabVendors: "Masu Sayarwa",
                     mCatTitleModal: "Zabi Rukuni", btnCatAll: "Dukkan Rukunoni", btnCatPhones: "📱 Wayoyi & Kwamfutoci", btnCatFashion: "👗 Kayan Sawa", btnCatVehicles: "🚗 Ababen Hawa", btnCatFood: "🍅 Kayan Abinci", btnCatElectronics: "📺 Kayan Lantarki", btnCatHome: "🪑 Kayan Gida", btnCatBeauty: "💄 Kayan Kwalliya", btnCatOthers: "📦 Wasu",
-                    alertImgSize: "Hoto yayi nauyi (Max 2MB)", alertAdPosted: "An dora kayanka!", alertCartAdd: "An saka a kwando!", alertCartEmpty: "Kwando fanko ne!", alertOrderSuccess: "Mun samu Order dinka! Zamu kawo maka kaya nan bada dadewa ba.", alertPayCancel: "An fasa biya.", alertCopied: "An kwafi asusun!", alertError: "Kuskure! Password ba daidai ba.", alertDelConfirm: "Goge wannan kayan?", noOrders: "Babu Siyayya tukunna."
+                    mRegTitle: "Rijistar Sabon Vendor", mRegSub: "Daure ka cike wadannan bayanan domin samun amincewa (Verification).", lvBizName: "Sunan Shagonka / Kasuwanci", lvFullName: "Cikakken Sunanka", lvPhone: "Lambar Waya (WhatsApp)", lvNIN: "Lambar NIN", lvBank: "Sunan Banki", lvAccount: "Lambar Asusu (Account Number)", btnSubmitReg: "YI RIJISTA",
+                    alertImgSize: "Hoto yayi nauyi (Max 2MB)", alertAdPosted: "An dora kayanka!", alertCartAdd: "An saka a kwando!", alertCartEmpty: "Kwando fanko ne!", alertOrderSuccess: "Mun samu Order dinka! Zamu kawo maka kaya nan bada dadewa ba.", alertPayCancel: "An fasa biya.", alertCopied: "An kwafi asusun!", alertError: "Kuskure! Password ba daidai ba.", alertDelConfirm: "Goge wannan kayan?", noOrders: "Babu Siyayya tukunna.",
+                    vPendingAlert: "Mun karbi bayananka, muna bincike a kai. Sai Admin ya amince zaka iya dora kaya.", vSuccessAlert: "Mun karbi bayananka! Zamu tuntubeka idan Admin ya amince.", vExistAlert: "Wannan lambar wayar ta riga ta yi rijista.", netError: "Matsalar network. Sake gwadawa.", noVendors: "Babu masu sayarwa (vendors) tukunna."
                 },
                 'en': { 
-                    // Same dictionary content ...
+                    search: "Search items...", postAd: "➕ Post Ad", empty: "No items found.", ship: "Shipping: ₦500",
+                    bannerTitle: "🔥 Hot Products", bannerSub: "Delivery Fee just ₦500!", loading: "Loading items...",
+                    navHome: "Home", navCat: "Categories", navCart: "Cart", pwaTitle: "Install Kanawa App!", pwaBtn: "Install Now",
+                    nContact: "Contact Us", nHelp: "Help & FAQ", nTerms: "Terms & Conditions", nSell: "Sell an Item", nAdmin: "Admin Panel",
+                    mPostTitle: "Post Your Ad Easily", lName: "Product Name", lPrice: "Price (₦)", lCat: "Select Category", lDesc: "Description", lVendor: "Shop Name", lPhoneR: "Phone Number (Auto-filled)", lImg: "Take Photo (Max 2MB)", btnSubmitPost: "POST AD NOW",
+                    mCartTitle: "Your Shopping Cart", cSubText: "Subtotal:", cShipText: "Delivery Fee:", cTotalText: "Total:", btnNaira: "💳 PAY WITH NAIRA", btnCrypto: "🪙 PAY WITH CRYPTO",
+                    chkTitle: "Delivery Details", clName: "Full Name", clPhone: "Phone Number", clEmail: "Email (For receipt)", clAddress: "Full Delivery Address", btnProceedPay: "Proceed to Payment",
+                    crTitle: "Crypto Payment Gateway", btnCopy: "📋 Copy Address", btnPaid: "✅ I HAVE PAID",
+                    pdVendorText: "Shop / Vendor:", pdAddToCart: "Add to Cart",
+                    mContactTitle: "Contact Us", mContactBody: "Call/WhatsApp: 09166614894", mHelpTitle: "Help Center", mHelpBody: "Select an item, add to cart, fill your address, and pay securely. We deliver to your door.", mTermsTitle: "Terms & Conditions", mTermsBody: "Your payment is secure. We charge a flat N500 delivery fee within Gombe.",
+                    mAdminTitle: "Admin Panel", btnAdminLogin: "Login", tabProducts: "Products", tabOrders: "Orders", tabVendors: "Vendors",
+                    mCatTitleModal: "Select Category", btnCatAll: "All Categories", btnCatPhones: "📱 Phones & PCs", btnCatFashion: "👗 Fashion", btnCatVehicles: "🚗 Vehicles", btnCatFood: "🍅 Food & Groceries", btnCatElectronics: "📺 Electronics", btnCatHome: "🪑 Home Furniture", btnCatBeauty: "💄 Health & Beauty", btnCatOthers: "📦 Others",
+                    mRegTitle: "New Vendor Registration", mRegSub: "Please fill these details to get verified.", lvBizName: "Business / Shop Name", lvFullName: "Full Name", lvPhone: "WhatsApp Number", lvNIN: "NIN Number", lvBank: "Bank Name", lvAccount: "Account Number", btnSubmitReg: "REGISTER NOW",
+                    alertImgSize: "Image too large (Max 2MB)", alertAdPosted: "Ad posted successfully!", alertCartAdd: "Added to cart!", alertCartEmpty: "Cart is empty!", alertOrderSuccess: "Order received! We will deliver your items soon.", alertPayCancel: "Payment cancelled.", alertCopied: "Address copied!", alertError: "Error! Incorrect password.", alertDelConfirm: "Delete this item?", noOrders: "No orders yet.",
+                    vPendingAlert: "We received your details. Awaiting Admin verification before you can post ads.", vSuccessAlert: "Details received! We will contact you once verified.", vExistAlert: "This phone number is already registered.", netError: "Network Error. Please try again.", noVendors: "No vendors registered yet."
                 }
             };
-            // Default dictionary mapping for English just to avoid errors
-            dict['en'] = dict['ha']; 
 
             let currentLang = 'ha'; let allProducts = []; 
             let cart = JSON.parse(localStorage.getItem('kanawa_cart') || '[]'); 
@@ -480,69 +473,56 @@ def vip_market():
             
             function changeLanguage(lang) { 
                 currentLang = lang; 
-                // Simple assignment for HA
+                document.getElementById('searchInput').placeholder = dict[lang].search;
+                document.getElementById('btnPostAd').innerText = dict[lang].postAd;
+                document.getElementById('bannerTitle').innerText = dict[lang].bannerTitle;
+                document.getElementById('bannerSub').innerText = dict[lang].bannerSub;
+                if(document.getElementById('loadingTxt')) document.getElementById('loadingTxt').innerText = dict[lang].loading;
+                document.getElementById('navHome').innerText = dict[lang].navHome; document.getElementById('navCat').innerText = dict[lang].navCat; document.getElementById('navCart').innerText = dict[lang].navCart;
+                document.getElementById('pwaTitle').innerText = dict[lang].pwaTitle; document.getElementById('pwaBtn').innerText = dict[lang].pwaBtn;
+                document.getElementById('nContact').innerText = dict[lang].nContact; document.getElementById('nHelp').innerText = dict[lang].nHelp; document.getElementById('nTerms').innerText = dict[lang].nTerms; document.getElementById('nSell').innerText = dict[lang].nSell; document.getElementById('nAdmin').innerText = dict[lang].nAdmin;
+                document.getElementById('mPostTitle').innerText = dict[lang].mPostTitle; document.getElementById('lName').innerText = dict[lang].lName; document.getElementById('lPrice').innerText = dict[lang].lPrice; document.getElementById('lCat').innerText = dict[lang].lCat; document.getElementById('lDesc').innerText = dict[lang].lDesc; document.getElementById('lVendor').innerText = dict[lang].lVendor; document.getElementById('lPhoneR').innerText = dict[lang].lPhoneR; document.getElementById('lImg').innerText = dict[lang].lImg; document.getElementById('btnSubmitPost').innerText = dict[lang].btnSubmitPost;
+                document.getElementById('mCartTitle').innerText = dict[lang].mCartTitle; document.getElementById('cSubText').innerText = dict[lang].cSubText; document.getElementById('cShipText').innerText = dict[lang].cShipText; document.getElementById('cTotalText').innerText = dict[lang].cTotalText; document.getElementById('btnCheckoutNaira').innerText = dict[lang].btnNaira; document.getElementById('btnCheckoutCrypto').innerText = dict[lang].btnCrypto;
+                document.getElementById('chkTitle').innerText = dict[lang].chkTitle; document.getElementById('clName').innerText = dict[lang].clName; document.getElementById('clPhone').innerText = dict[lang].clPhone; document.getElementById('clEmail').innerText = dict[lang].clEmail; document.getElementById('clAddress').innerText = dict[lang].clAddress; document.getElementById('btnProceedPay').innerText = dict[lang].btnProceedPay;
+                document.getElementById('crTitle').innerText = dict[lang].crTitle; document.getElementById('btnCopyWallet').innerText = dict[lang].btnCopy; document.getElementById('btnPaidCrypto').innerText = dict[lang].btnPaid;
+                document.getElementById('pdVendorText').innerText = dict[lang].pdVendorText; document.getElementById('pdAddToCart').innerText = dict[lang].pdAddToCart;
+                document.getElementById('mContactTitle').innerText = dict[lang].mContactTitle; document.getElementById('mContactBody').innerText = dict[lang].mContactBody;
+                document.getElementById('mHelpTitle').innerText = dict[lang].mHelpTitle; document.getElementById('mHelpBody').innerText = dict[lang].mHelpBody;
+                document.getElementById('mTermsTitle').innerText = dict[lang].mTermsTitle; document.getElementById('mTermsBody').innerText = dict[lang].mTermsBody;
+                document.getElementById('mAdminTitle').innerText = dict[lang].mAdminTitle; document.getElementById('btnAdminLogin').innerText = dict[lang].btnAdminLogin; document.getElementById('tabProducts').innerText = dict[lang].tabProducts; document.getElementById('tabOrders').innerText = dict[lang].tabOrders; document.getElementById('tabVendors').innerText = dict[lang].tabVendors;
+                document.getElementById('mCatTitleModal').innerText = dict[lang].mCatTitleModal; document.getElementById('btnCatAll').innerText = dict[lang].btnCatAll; document.getElementById('btnCatPhones').innerText = dict[lang].btnCatPhones; document.getElementById('btnCatFashion').innerText = dict[lang].btnCatFashion; document.getElementById('btnCatVehicles').innerText = dict[lang].btnCatVehicles; document.getElementById('btnCatFood').innerText = dict[lang].btnCatFood; document.getElementById('btnCatElectronics').innerText = dict[lang].btnCatElectronics; document.getElementById('btnCatHome').innerText = dict[lang].btnCatHome; document.getElementById('btnCatBeauty').innerText = dict[lang].btnCatBeauty; document.getElementById('btnCatOthers').innerText = dict[lang].btnCatOthers;
+                document.getElementById('optPhones').innerText = dict[lang].btnCatPhones.substring(3); document.getElementById('optFashion').innerText = dict[lang].btnCatFashion.substring(3); document.getElementById('optVehicles').innerText = dict[lang].btnCatVehicles.substring(3); document.getElementById('optFood').innerText = dict[lang].btnCatFood.substring(3); document.getElementById('optElectronics').innerText = dict[lang].btnCatElectronics.substring(3); document.getElementById('optHome').innerText = dict[lang].btnCatHome.substring(3); document.getElementById('optBeauty').innerText = dict[lang].btnCatBeauty.substring(3); document.getElementById('optOthers').innerText = dict[lang].btnCatOthers.substring(3);
+                document.getElementById('mRegTitle').innerText = dict[lang].mRegTitle; document.getElementById('mRegSub').innerText = dict[lang].mRegSub; document.getElementById('lvBizName').innerText = dict[lang].lvBizName; document.getElementById('lvFullName').innerText = dict[lang].lvFullName; document.getElementById('lvPhone').innerText = dict[lang].lvPhone; document.getElementById('lvNIN').innerText = dict[lang].lvNIN; document.getElementById('lvBank').innerText = dict[lang].lvBank; document.getElementById('lvAccount').innerText = dict[lang].lvAccount; document.getElementById('btnSubmitReg').innerText = dict[lang].btnSubmitReg;
+
                 filterProducts(); updateCart();
             }
 
             function openModal(id) { document.getElementById(id).style.display = 'flex'; }
             function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-            // TSARIN DUBA MATSAYIN VENDOR DAGA DATABASE
             async function initiateVendorCheck() {
                 let userPhone = localStorage.getItem('kdv_vendor_phone');
-                if (!userPhone) {
-                    // Bai taba rijista ba
-                    openModal('vendorRegModal');
-                    return;
-                }
-
-                document.getElementById('btnPostAd').innerText = "Ana duba matsayi...";
-                
+                if (!userPhone) { openModal('vendorRegModal'); return; }
+                document.getElementById('btnPostAd').innerText = "...";
                 try {
-                    let res = await fetch('/vendor-status/' + userPhone);
-                    let data = await res.json();
-                    
-                    document.getElementById('btnPostAd').innerText = "➕ Sayar da Kaya";
-                    
-                    if (data.status === 'verified') {
-                        document.getElementById('phone').value = userPhone;
-                        openModal('uploadModal');
-                    } else if (data.status === 'pending') {
-                        alert("Mun karbi bayananka, muna bincike a kai. Sai Admin ya amince zaka iya dora kaya.");
-                    } else {
-                        openModal('vendorRegModal');
-                    }
-                } catch(e) {
-                    alert("Matsalar network. Sake gwadawa.");
-                    document.getElementById('btnPostAd').innerText = "➕ Sayar da Kaya";
-                }
+                    let res = await fetch('/vendor-status/' + userPhone); let data = await res.json();
+                    document.getElementById('btnPostAd').innerText = dict[currentLang].postAd;
+                    if (data.status === 'verified') { document.getElementById('phone').value = userPhone; openModal('uploadModal'); } 
+                    else if (data.status === 'pending') { alert(dict[currentLang].vPendingAlert); } 
+                    else { openModal('vendorRegModal'); }
+                } catch(e) { alert(dict[currentLang].netError); document.getElementById('btnPostAd').innerText = dict[currentLang].postAd; }
             }
 
-            // AIKA BAYANAN RIJISTAR VENDOR
             document.getElementById('vendorRegForm').onsubmit = function(e) {
-                e.preventDefault(); 
-                document.getElementById('btnSubmitReg').disabled = true;
+                e.preventDefault(); document.getElementById('btnSubmitReg').disabled = true;
                 const phoneVal = document.getElementById('vPhone').value;
-                const data = { 
-                    business_name: document.getElementById('vBizName').value, 
-                    full_name: document.getElementById('vFullName').value, 
-                    phone: phoneVal, 
-                    nin: document.getElementById('vNIN').value, 
-                    bank_name: document.getElementById('vBank').value, 
-                    account_number: document.getElementById('vAccount').value 
-                };
+                const data = { business_name: document.getElementById('vBizName').value, full_name: document.getElementById('vFullName').value, phone: phoneVal, nin: document.getElementById('vNIN').value, bank_name: document.getElementById('vBank').value, account_number: document.getElementById('vAccount').value };
                 
                 fetch('/yi-rijista-vendor/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
-                .then(res => res.json())
-                .then(res => {
-                    if(res.sako === "Success") {
-                        localStorage.setItem('kdv_vendor_phone', phoneVal);
-                        alert("Mun karbi bayananka! Zamu tuntubeka idan Admin ya amince.");
-                        closeModal('vendorRegModal');
-                        document.getElementById('vendorRegForm').reset();
-                    } else {
-                        alert(res.sako);
-                    }
+                .then(res => res.json()).then(res => {
+                    if(res.sako === "Success") { localStorage.setItem('kdv_vendor_phone', phoneVal); alert(dict[currentLang].vSuccessAlert); closeModal('vendorRegModal'); document.getElementById('vendorRegForm').reset(); } 
+                    else if(res.sako === "exist") { alert(dict[currentLang].vExistAlert); } 
+                    else { alert(res.sako); }
                     document.getElementById('btnSubmitReg').disabled = false;
                 });
             };
@@ -563,11 +543,7 @@ def vip_market():
                 });
             };
 
-            function selectCategory(catValue) {
-                document.getElementById('categoryFilter').value = catValue;
-                filterProducts();
-                closeModal('categoryModal');
-            }
+            function selectCategory(catValue) { document.getElementById('categoryFilter').value = catValue; filterProducts(); closeModal('categoryModal'); }
 
             function filterProducts() {
                 const query = document.getElementById('searchInput').value.toLowerCase(); const cat = document.getElementById('categoryFilter').value;
@@ -579,8 +555,7 @@ def vip_market():
                 const container = document.getElementById('kayayyaki'); container.innerHTML = '';
                 if(products.length === 0){ container.innerHTML = `<div style="text-align:center; padding:20px; width:100%; color:#999;">${dict[currentLang].empty}</div>`; return; }
                 products.forEach(kaya => {
-                    const card = document.createElement('div'); card.className = 'card';
-                    card.onclick = () => viewProduct(kaya);
+                    const card = document.createElement('div'); card.className = 'card'; card.onclick = () => viewProduct(kaya);
                     card.innerHTML = `<img src="${kaya.image_base64}" class="card-img"><div class="card-details"><h4 class="card-title">${kaya.name}</h4><div class="card-price">₦${kaya.price}</div></div>`;
                     container.appendChild(card);
                 });
@@ -597,16 +572,9 @@ def vip_market():
             function addToCart(id, name, price) { cart.push({id, name, price}); updateCart(); alert(dict[currentLang].alertCartAdd); }
 
             function updateCart() {
-                localStorage.setItem('kanawa_cart', JSON.stringify(cart));
-                document.getElementById('cartCount').innerText = cart.length; 
+                localStorage.setItem('kanawa_cart', JSON.stringify(cart)); document.getElementById('cartCount').innerText = cart.length; 
                 const div = document.getElementById('cartItems');
-                if(cart.length === 0) { 
-                    div.innerHTML = dict[currentLang].empty; 
-                    document.getElementById('cartSubtotal').innerText = '₦0'; 
-                    document.getElementById('cartTotal').innerText = '0'; 
-                    currentCartTotal = 0; 
-                    return; 
-                }
+                if(cart.length === 0) { div.innerHTML = dict[currentLang].empty; document.getElementById('cartSubtotal').innerText = '₦0'; document.getElementById('cartTotal').innerText = '0'; currentCartTotal = 0; return; }
                 let sub = 0; let cartHtml = '';
                 cart.forEach((item, i) => { sub += item.price; cartHtml += `<div class="cart-item"><div><b>${item.name}</b><br><span style="color:red">₦${item.price}</span></div><button class="remove-btn" onclick="removeFromCart(${i})">X</button></div>`; });
                 div.innerHTML = cartHtml; document.getElementById('cartSubtotal').innerText = '₦' + sub; currentCartTotal = sub + SHIPPING_FEE; document.getElementById('cartTotal').innerText = currentCartTotal;
@@ -616,50 +584,34 @@ def vip_market():
 
             function initCheckout(method) {
                 if(cart.length === 0) return alert(dict[currentLang].alertCartEmpty);
-                document.getElementById('paymentChoice').value = method;
-                closeModal('cartModal'); openModal('checkoutModal');
+                document.getElementById('paymentChoice').value = method; closeModal('cartModal'); openModal('checkoutModal');
             }
 
-            document.getElementById('checkoutForm').onsubmit = function(e) {
-                e.preventDefault(); const method = document.getElementById('paymentChoice').value;
-                if(method === 'naira') { doPaystack(); } else { doCrypto(); }
-            };
+            document.getElementById('checkoutForm').onsubmit = function(e) { e.preventDefault(); const method = document.getElementById('paymentChoice').value; if(method === 'naira') { doPaystack(); } else { doCrypto(); } };
 
             function saveOrder(method) {
                 const orderData = { customer_name: document.getElementById('cName').value, customer_phone: document.getElementById('cPhone').value, customer_email: document.getElementById('cEmail').value, customer_address: document.getElementById('cAddress').value, items: JSON.stringify(cart), total_amount: currentCartTotal, payment_method: method };
                 fetch('/yi-order/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(orderData) }).then(() => {
-                    alert(dict[currentLang].alertOrderSuccess);
-                    cart = []; updateCart(); closeModal('checkoutModal'); closeModal('cryptoModal'); document.getElementById('checkoutForm').reset();
+                    alert(dict[currentLang].alertOrderSuccess); cart = []; updateCart(); closeModal('checkoutModal'); closeModal('cryptoModal'); document.getElementById('checkoutForm').reset();
                 });
             }
 
             function doPaystack() {
                 let handler = PaystackPop.setup({
-                    key: 'pk_test_4d6a3f906c1a1fa859539e7b6086d6be3e3b5b1f', 
-                    email: document.getElementById('cEmail').value, amount: currentCartTotal * 100, currency: 'NGN', channels: ['card', 'bank_transfer', 'ussd'], 
-                    ref: 'KDV_' + Math.floor((Math.random() * 1000000000) + 1), 
-                    callback: function(res) { saveOrder('Paystack'); },
-                    onClose: function() { alert(dict[currentLang].alertPayCancel); }
+                    key: 'pk_test_4d6a3f906c1a1fa859539e7b6086d6be3e3b5b1f', email: document.getElementById('cEmail').value, amount: currentCartTotal * 100, currency: 'NGN', channels: ['card', 'bank_transfer', 'ussd'], 
+                    ref: 'KDV_' + Math.floor((Math.random() * 1000000000) + 1), callback: function(res) { saveOrder('Paystack'); }, onClose: function() { alert(dict[currentLang].alertPayCancel); }
                 }); handler.openIframe();
             }
 
-            function doCrypto() {
-                document.getElementById('cryptoUsdTotal').innerText = (currentCartTotal / EXCHANGE_RATE).toFixed(2);
-                closeModal('checkoutModal'); openModal('cryptoModal');
-            }
-
+            function doCrypto() { document.getElementById('cryptoUsdTotal').innerText = (currentCartTotal / EXCHANGE_RATE).toFixed(2); closeModal('checkoutModal'); openModal('cryptoModal'); }
             function copyWallet() { navigator.clipboard.writeText("GDcKRBja7tDKqDftF2WGj3zcwUUBUoUV2xCqaMxfKwzR"); alert(dict[currentLang].alertCopied); }
             function confirmCryptoPaid() { saveOrder('Crypto'); }
 
             function loginAdmin() { if(document.getElementById('adminPass').value === "kanawa123") { document.getElementById('adminAuth').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadOrders(); loadVendors(); } else { alert(dict[currentLang].alertError); } }
             
             function switchAdminTab(tab) {
-                document.getElementById('tabProducts').className = tab === 'products' ? 'admin-tab active' : 'admin-tab';
-                document.getElementById('tabOrders').className = tab === 'orders' ? 'admin-tab active' : 'admin-tab';
-                document.getElementById('tabVendors').className = tab === 'vendors' ? 'admin-tab active' : 'admin-tab';
-                document.getElementById('adminItems').style.display = tab === 'products' ? 'block' : 'none';
-                document.getElementById('adminOrders').style.display = tab === 'orders' ? 'block' : 'none';
-                document.getElementById('adminVendors').style.display = tab === 'vendors' ? 'block' : 'none';
+                document.getElementById('tabProducts').className = tab === 'products' ? 'admin-tab active' : 'admin-tab'; document.getElementById('tabOrders').className = tab === 'orders' ? 'admin-tab active' : 'admin-tab'; document.getElementById('tabVendors').className = tab === 'vendors' ? 'admin-tab active' : 'admin-tab';
+                document.getElementById('adminItems').style.display = tab === 'products' ? 'block' : 'none'; document.getElementById('adminOrders').style.display = tab === 'orders' ? 'block' : 'none'; document.getElementById('adminVendors').style.display = tab === 'vendors' ? 'block' : 'none';
             }
 
             function renderAdminProducts(products) {
@@ -669,63 +621,30 @@ def vip_market():
 
             function loadOrders() {
                 fetch('/duba-orders/').then(res => res.json()).then(data => {
-                    const div = document.getElementById('adminOrders'); div.innerHTML = '';
-                    if(data.length===0) div.innerHTML = dict[currentLang].noOrders;
-                    data.forEach(o => {
-                        let items = JSON.parse(o.items).map(i => i.name).join(", ");
-                        div.innerHTML += `<div class="order-card"><b>Suna:</b> ${o.customer_name} <br><b>Waya:</b> ${o.customer_phone} <br><b>Adireshi:</b> ${o.customer_address} <br><b>Kaya:</b> ${items} <br><b>Kudi:</b> ₦${o.total_amount} (${o.payment_method}) <br><small style="color:gray">${o.date_created}</small></div>`;
-                    });
+                    const div = document.getElementById('adminOrders'); div.innerHTML = ''; if(data.length===0) div.innerHTML = dict[currentLang].noOrders;
+                    data.forEach(o => { let items = JSON.parse(o.items).map(i => i.name).join(", "); div.innerHTML += `<div class="order-card"><b>Suna:</b> ${o.customer_name} <br><b>Waya:</b> ${o.customer_phone} <br><b>Adireshi:</b> ${o.customer_address} <br><b>Kaya:</b> ${items} <br><b>Kudi:</b> ₦${o.total_amount} (${o.payment_method}) <br><small style="color:gray">${o.date_created}</small></div>`; });
                 });
             }
 
-            // ADMIN YA DUBA KUMA YA AMINCE DA VENDOR
             function loadVendors() {
                 fetch('/duba-vendors/').then(res => res.json()).then(data => {
-                    const div = document.getElementById('adminVendors'); div.innerHTML = '';
-                    if(data.length===0) div.innerHTML = "Babu masu sayarwa (vendors) tukunna.";
+                    const div = document.getElementById('adminVendors'); div.innerHTML = ''; if(data.length===0) div.innerHTML = dict[currentLang].noVendors;
                     data.forEach(v => {
-                        let statusBtn = v.is_verified 
-                            ? `<span style="color:green; font-weight:bold;">✅ An Amince</span>` 
-                            : `<button onclick="approveVendor(${v.id})" style="background:green; color:white; border:none; padding:8px 12px; border-radius:5px; font-weight:bold; cursor:pointer;">Verify (Amince)</button>`;
-                        
-                        div.innerHTML += `<div class="order-card">
-                            <b>Shago:</b> ${v.business_name} <br>
-                            <b>Suna:</b> ${v.full_name} <br>
-                            <b>Waya:</b> ${v.phone} <br>
-                            <b>NIN:</b> ${v.nin} <br>
-                            <b>Asusu:</b> ${v.bank_name} - ${v.account_number} <br>
-                            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc;">${statusBtn}</div>
-                        </div>`;
+                        let statusBtn = v.is_verified ? `<span style="color:green; font-weight:bold;">✅ An Amince / Verified</span>` : `<button onclick="approveVendor(${v.id})" style="background:green; color:white; border:none; padding:8px 12px; border-radius:5px; font-weight:bold; cursor:pointer;">Verify (Amince)</button>`;
+                        div.innerHTML += `<div class="order-card"><b>Shago:</b> ${v.business_name} <br><b>Suna:</b> ${v.full_name} <br><b>Waya:</b> ${v.phone} <br><b>NIN:</b> ${v.nin} <br><b>Asusu:</b> ${v.bank_name} - ${v.account_number} <br><div style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc;">${statusBtn}</div></div>`;
                     });
                 });
             }
 
             function approveVendor(id) {
-                if(confirm("Tabbas kana son ka ba wannan mutumin damar dora kaya?")) {
-                    fetch('/verify-vendor/' + id, {method: 'PUT'}).then(res => res.json()).then(res => {
-                        alert(res.sako);
-                        loadVendors();
-                    });
-                }
+                if(confirm("Tabbas kana son ka ba wannan mutumin damar dora kaya? / Are you sure?")) { fetch('/verify-vendor/' + id, {method: 'PUT'}).then(res => res.json()).then(res => { alert(res.sako); loadVendors(); }); }
             }
 
-            let deferredPrompt;
-            const banner = document.getElementById('installBanner');
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                banner.style.display = 'block'; 
-                setTimeout(() => { banner.style.display = 'none'; }, 5000);
-            });
-            function installApp() {
-                banner.style.display = 'none';
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((choice) => { deferredPrompt = null; });
-                }
-            }
+            let deferredPrompt; const banner = document.getElementById('installBanner');
+            window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; banner.style.display = 'block'; setTimeout(() => { banner.style.display = 'none'; }, 5000); });
+            function installApp() { banner.style.display = 'none'; if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then((choice) => { deferredPrompt = null; }); } }
 
-            window.onload = function() { loadProducts(); updateCart(); };
+            window.onload = function() { changeLanguage('ha'); loadProducts(); };
         </script>
     </body>
     </html>
