@@ -122,6 +122,31 @@ def vip_market():
                     navigator.serviceWorker.register('data:text/javascript,console.log("Service Worker Registered")').catch(err => console.log(err));
                 });
             }
+       <script>
+    let deferredPrompt;
+    const banner = document.getElementById('installBanner');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        banner.style.display = 'block'; // Akwatin zai fito
+        
+        // Zai ɓace bayan daƙiƙa 5 (5000ms)
+        setTimeout(() => {
+            banner.style.display = 'none';
+        }, 5000);
+    });
+
+    function installApp() {
+        banner.style.display = 'none';
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choice) => {
+                deferredPrompt = null;
+            });
+        }
+    }
+</script>
         </script>
         <script src="https://js.paystack.co/v1/inline.js"></script>
         <style>
@@ -187,7 +212,13 @@ def vip_market():
         </style>
     </head>
     <body>
-
+    
+<body>
+    <div id="installBanner" style="display:none; position:fixed; top:20px; left:5%; width:90%; background:#e62e04; color:white; padding:15px; border-radius:10px; z-index:9999; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+        <p style="margin:0 0 10px 0; font-weight:bold;">Install Kanawa Digital Market!</p>
+        <button onclick="installApp()" style="background:white; color:#e62e04; border:none; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer;">Install Now</button>
+    </div>
+    
         <div id="sidenavOverlay" class="sidenav-overlay" onclick="closeNav()"></div>
 
         <div id="sideNav" class="sidenav">
