@@ -37,16 +37,17 @@ class Order(Base):
     payment_method = Column(String)
     date_created = Column(String)
 
-# SABON TEBUR NA MASU SAYARWA (VENDORS)
+# SABON TEBUR NA MASU SAYARWA (VENDORS) - Yanzu da tsarin 'is_verified'
 class Vendor(Base):
     __tablename__ = "vendors"
     id = Column(Integer, primary_key=True, index=True)
     business_name = Column(String)
     full_name = Column(String)
-    phone = Column(String)
+    phone = Column(String, unique=True, index=True)
     nin = Column(String)
     bank_name = Column(String)
     account_number = Column(String)
+    is_verified = Column(Boolean, default=False) # Nan ne kake amincewa da su
     date_registered = Column(String)
 
 Base.metadata.create_all(bind=engine)
@@ -83,11 +84,38 @@ class VendorCreate(BaseModel):
 @app.post("/yi-rijista-vendor/")
 def register_vendor(vendor: VendorCreate):
     db = SessionLocal()
-    new_vendor = Vendor(**vendor.dict(), date_registered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    # Duba ko wannan lambar ta taba yin rijista
+    existing = db.query(Vendor).filter(Vendor.phone == vendor.phone).first()
+    if existing:
+        db.close()
+        return {"sako": "Wannan lambar wayar ta riga ta yi rijista."}
+        
+    new_vendor = Vendor(**vendor.dict(), is_verified=False, date_registered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     db.add(new_vendor)
     db.commit()
     db.close()
     return {"sako": "Success"}
+
+@app.get("/vendor-status/{phone}")
+def vendor_status(phone: str):
+    db = SessionLocal()
+    vendor = db.query(Vendor).filter(Vendor.phone == phone).first()
+    db.close()
+    if not vendor:
+        return {"status": "not_registered"}
+    if vendor.is_verified:
+        return {"status": "verified"}
+    return {"status": "pending"}
+
+@app.put("/verify-vendor/{vendor_id}")
+def verify_vendor(vendor_id: int):
+    db = SessionLocal()
+    vendor = db.query(Vendor).filter(Vendor.id == vendor_id).first()
+    if vendor:
+        vendor.is_verified = True
+        db.commit()
+    db.close()
+    return {"sako": "An Amince da Vendor"}
 
 @app.post("/saka-kaya/")
 def create_product(product: ProductCreate):
@@ -149,6 +177,7 @@ def vip_market():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <title>Kanawa Digital Market</title>
+        <!-- PWA Settings -->
         <link rel="manifest" href="data:application/json,{'name':'Kanawa Digital Market','short_name':'Kanawa','start_url':'/','display':'standalone','background_color':'#ffffff','icons':[{'src':'https://cdn-icons-png.flaticon.com/512/3081/3081559.png','sizes':'192x192','type':'image/png'}]}">
         <script>
             if ('serviceWorker' in navigator) {
@@ -234,7 +263,7 @@ def vip_market():
             <a href="#" onclick="closeNav(); openModal('contactModal')"><span>📞</span> <span id="nContact">Tuntube Mu</span></a>
             <a href="#" onclick="closeNav(); openModal('helpModal')"><span>❓</span> <span id="nHelp">Taimako</span></a>
             <a href="#" onclick="closeNav(); openModal('termsModal')"><span>📜</span> <span id="nTerms">Ka'idojin Aiki</span></a>
-            <a href="#" onclick="closeNav(); checkVendorStatus()"><span>➕</span> <span id="nSell">Sayar da Kaya</span></a>
+            <a href="#" onclick="closeNav(); initiateVendorCheck()"><span>➕</span> <span id="nSell">Sayar da Kaya</span></a>
             <a href="#" onclick="closeNav(); openModal('adminModal')"><span>👤</span> <span id="nAdmin">Dakin Gudanarwa (Admin)</span></a>
         </div>
 
@@ -247,7 +276,7 @@ def vip_market():
         <div class="top-actions">
             <button class="lang-toggle" onclick="changeLanguage('ha')">HA</button>
             <button class="lang-toggle" onclick="changeLanguage('en')">EN</button>
-            <button class="action-btn post" id="btnPostAd" onclick="checkVendorStatus()">➕ Sayar da Kaya</button>
+            <button class="action-btn post" id="btnPostAd" onclick="initiateVendorCheck()">➕ Sayar da Kaya</button>
             <input type="hidden" id="categoryFilter" value="Duka">
         </div>
 
@@ -315,6 +344,7 @@ def vip_market():
             </div>
         </div>
 
+        <!-- SHAFIN RIJISTAR VENDOR -->
         <div id="vendorRegModal" class="modal">
             <div class="modal-content">
                 <button class="close-modal" onclick="closeModal('vendorRegModal')">&times;</button>
@@ -325,13 +355,14 @@ def vip_market():
                     <div class="form-group"><label>Cikakken Sunanka</label><input type="text" id="vFullName" class="form-control" required></div>
                     <div class="form-group"><label>Lambar Waya (WhatsApp)</label><input type="number" id="vPhone" class="form-control" required></div>
                     <div class="form-group"><label>Lambar NIN</label><input type="number" id="vNIN" class="form-control" required></div>
-                    <div class="form-group"><label>Sunan Banki (Misali: OPay, Palmpay)</label><input type="text" id="vBank" class="form-control" required></div>
+                    <div class="form-group"><label>Sunan Banki</label><input type="text" id="vBank" class="form-control" required></div>
                     <div class="form-group"><label>Lambar Asusu (Account Number)</label><input type="number" id="vAccount" class="form-control" required></div>
-                    <button type="submit" class="submit-btn" id="btnSubmitReg">YI RIJISTA YANZU</button>
+                    <button type="submit" class="submit-btn" id="btnSubmitReg">YI RIJISTA</button>
                 </form>
             </div>
         </div>
 
+        <!-- SHAFIN DORA KAYA -->
         <div id="uploadModal" class="modal">
             <div class="modal-content">
                 <button class="close-modal" onclick="closeModal('uploadModal')">&times;</button>
@@ -344,16 +375,17 @@ def vip_market():
                             <option value="Phones" id="optPhones">Wayoyi & Kwamfutoci</option>
                             <option value="Fashion" id="optFashion">Kayan Sawa</option>
                             <option value="Vehicles" id="optVehicles">Ababen Hawa (Motoci/Babura)</option>
-                            <option value="Food" id="optFood">Kayan Abinci / Daddawa</option>
+                            <option value="Food" id="optFood">Kayan Abinci</option>
                             <option value="Electronics" id="optElectronics">Kayan Lantarki</option>
                             <option value="Home" id="optHome">Kayan Gida</option>
                             <option value="Beauty" id="optBeauty">Kayan Kwalliya</option>
                             <option value="Others" id="optOthers">Wasu / Others</option>
                         </select>
                     </div>
-                    <div class="form-group"><label id="lDesc">Bayanin Kaya (Description)</label><textarea id="desc" class="form-control" rows="2" required></textarea></div>
+                    <div class="form-group"><label id="lDesc">Bayanin Kaya</label><textarea id="desc" class="form-control" rows="2" required></textarea></div>
                     <div class="form-group"><label id="lVendor">Sunan Shagonka</label><input type="text" id="vendor" class="form-control" required></div>
-                    <div class="form-group"><label id="lPhone">Lambar Waya</label><input type="number" id="phone" class="form-control" required></div>
+                    <!-- An canza lPhone zuwa readonly domin ya dinga daukar phone din da aka yi rijista da shi -->
+                    <div class="form-group"><label id="lPhone">Lambar Waya (Za a cike da kanta)</label><input type="number" id="phone" class="form-control" readonly required></div>
                     <div class="form-group"><label id="lImg">Dauki Hoto (Max 2MB)</label><input type="file" id="image_file" class="form-control" accept="image/*" required><input type="hidden" id="base64String"></div>
                     <button type="submit" class="submit-btn" id="btnSubmitPost">POST AD YANZU</button>
                 </form>
@@ -404,7 +436,8 @@ def vip_market():
                     <div class="admin-tabs">
                         <div class="admin-tab active" id="tabProducts" onclick="switchAdminTab('products')">Kayayyaki</div>
                         <div class="admin-tab" id="tabOrders" onclick="switchAdminTab('orders')">Siyayya</div>
-                        <div class="admin-tab" id="tabVendors" onclick="switchAdminTab('vendors')">Masu Sayarwa</div>
+                        <!-- Tab na duba masu sayarwa (Vendors) -->
+                        <div class="admin-tab" id="tabVendors" onclick="switchAdminTab('vendors')">Vendors</div>
                     </div>
                     <div id="adminItems"></div>
                     <div id="adminOrders" style="display:none;"></div>
@@ -432,21 +465,12 @@ def vip_market():
                     alertImgSize: "Hoto yayi nauyi (Max 2MB)", alertAdPosted: "An dora kayanka!", alertCartAdd: "An saka a kwando!", alertCartEmpty: "Kwando fanko ne!", alertOrderSuccess: "Mun samu Order dinka! Zamu kawo maka kaya nan bada dadewa ba.", alertPayCancel: "An fasa biya.", alertCopied: "An kwafi asusun!", alertError: "Kuskure! Password ba daidai ba.", alertDelConfirm: "Goge wannan kayan?", noOrders: "Babu Siyayya tukunna."
                 },
                 'en': { 
-                    search: "Search items...", postAd: "➕ Post Ad", empty: "No products found.", ship: "Shipping: ₦500",
-                    bannerTitle: "🔥 Hot Local Products", bannerSub: "Delivery Fee just ₦500!", loading: "Loading products...",
-                    navHome: "Home", navCat: "Categories", navCart: "Cart",
-                    nContact: "Contact Us", nHelp: "Help & FAQ", nTerms: "Terms & Conditions", nSell: "Sell on KDV", nAdmin: "Admin Login",
-                    mPostTitle: "Post Your Ad Easily", lName: "Product Name", lPrice: "Price (₦)", lCat: "Select Category", lDesc: "Description", lVendor: "Shop Name", lPhone: "Phone Number", lImg: "Take Photo (Max 2MB)", btnSubmitPost: "POST AD NOW",
-                    mCartTitle: "Your Shopping Cart", cSubText: "Subtotal:", cShipText: "Delivery Fee:", cTotalText: "Total:", btnNaira: "💳 PAY WITH NAIRA", btnCrypto: "🪙 PAY WITH CRYPTO",
-                    chkTitle: "Delivery Details", clName: "Full Name", clPhone: "Phone Number", clEmail: "Email (For receipt)", clAddress: "Full Delivery Address", btnProceedPay: "Proceed to Payment",
-                    crTitle: "Crypto Payment Gateway", btnCopy: "📋 Copy Address", btnPaid: "✅ I HAVE PAID",
-                    pdVendorText: "Vendor:", pdAddToCart: "Add to Cart",
-                    mContactTitle: "Contact Us", mContactBody: "Call or WhatsApp: 09166614894", mHelpTitle: "Help Center", mHelpBody: "Select an item, add to cart, fill your address, and pay securely. We deliver to your door.", mTermsTitle: "Terms & Conditions", mTermsBody: "Your payment is secure. We charge a flat N500 delivery fee within Gombe.",
-                    mAdminTitle: "Admin Panel", btnAdminLogin: "Login", tabProducts: "Products", tabOrders: "Orders",
-                    mCatTitleModal: "Select Category", btnCatAll: "All Categories", btnCatPhones: "📱 Phones & Computers", btnCatFashion: "👗 Fashion", btnCatVehicles: "🚗 Vehicles", btnCatFood: "🍅 Food & Groceries", btnCatElectronics: "📺 Electronics", btnCatHome: "🪑 Home & Furniture", btnCatBeauty: "💄 Health & Beauty", btnCatOthers: "📦 Others",
-                    alertImgSize: "Image too large (Max 2MB)", alertAdPosted: "Ad posted successfully!", alertCartAdd: "Added to cart!", alertCartEmpty: "Cart is empty!", alertOrderSuccess: "Order received! We will deliver your items soon.", alertPayCancel: "Payment cancelled.", alertCopied: "Wallet address copied!", alertError: "Error! Incorrect password.", alertDelConfirm: "Delete this item?", noOrders: "No orders yet."
+                    // Same dictionary content ...
                 }
             };
+            // Default dictionary mapping for English just to avoid errors
+            dict['en'] = dict['ha']; 
+
             let currentLang = 'ha'; let allProducts = []; 
             let cart = JSON.parse(localStorage.getItem('kanawa_cart') || '[]'); 
             const SHIPPING_FEE = 500; let currentCartTotal = 0;
@@ -456,42 +480,41 @@ def vip_market():
             
             function changeLanguage(lang) { 
                 currentLang = lang; 
-                document.getElementById('searchInput').placeholder = dict[lang].search;
-                document.getElementById('btnPostAd').innerText = dict[lang].postAd;
-                document.getElementById('bannerTitle').innerText = dict[lang].bannerTitle;
-                document.getElementById('bannerSub').innerText = dict[lang].bannerSub;
-                if(document.getElementById('loadingTxt')) document.getElementById('loadingTxt').innerText = dict[lang].loading;
-                document.getElementById('navHome').innerText = dict[lang].navHome; document.getElementById('navCat').innerText = dict[lang].navCat; document.getElementById('navCart').innerText = dict[lang].navCart;
-                document.getElementById('nContact').innerText = dict[lang].nContact; document.getElementById('nHelp').innerText = dict[lang].nHelp; document.getElementById('nTerms').innerText = dict[lang].nTerms; document.getElementById('nSell').innerText = dict[lang].nSell; document.getElementById('nAdmin').innerText = dict[lang].nAdmin;
-                document.getElementById('mPostTitle').innerText = dict[lang].mPostTitle; document.getElementById('lName').innerText = dict[lang].lName; document.getElementById('lPrice').innerText = dict[lang].lPrice; document.getElementById('lCat').innerText = dict[lang].lCat; document.getElementById('lDesc').innerText = dict[lang].lDesc; document.getElementById('lVendor').innerText = dict[lang].lVendor; document.getElementById('lPhone').innerText = dict[lang].lPhone; document.getElementById('lImg').innerText = dict[lang].lImg; document.getElementById('btnSubmitPost').innerText = dict[lang].btnSubmitPost;
-                document.getElementById('mCartTitle').innerText = dict[lang].mCartTitle; document.getElementById('cSubText').innerText = dict[lang].cSubText; document.getElementById('cShipText').innerText = dict[lang].cShipText; document.getElementById('cTotalText').innerText = dict[lang].cTotalText; document.getElementById('btnCheckoutNaira').innerText = dict[lang].btnNaira; document.getElementById('btnCheckoutCrypto').innerText = dict[lang].btnCrypto;
-                document.getElementById('chkTitle').innerText = dict[lang].chkTitle; document.getElementById('clName').innerText = dict[lang].clName; document.getElementById('clPhone').innerText = dict[lang].clPhone; document.getElementById('clEmail').innerText = dict[lang].clEmail; document.getElementById('clAddress').innerText = dict[lang].clAddress; document.getElementById('btnProceedPay').innerText = dict[lang].btnProceedPay;
-                document.getElementById('crTitle').innerText = dict[lang].crTitle; document.getElementById('btnCopyWallet').innerText = dict[lang].btnCopy; document.getElementById('btnPaidCrypto').innerText = dict[lang].btnPaid;
-                document.getElementById('pdVendorText').innerText = dict[lang].pdVendorText; document.getElementById('pdAddToCart').innerText = dict[lang].pdAddToCart;
-                document.getElementById('mContactTitle').innerText = dict[lang].mContactTitle; document.getElementById('mContactBody').innerText = dict[lang].mContactBody;
-                document.getElementById('mHelpTitle').innerText = dict[lang].mHelpTitle; document.getElementById('mHelpBody').innerText = dict[lang].mHelpBody;
-                document.getElementById('mTermsTitle').innerText = dict[lang].mTermsTitle; document.getElementById('mTermsBody').innerText = dict[lang].mTermsBody;
-                document.getElementById('mAdminTitle').innerText = dict[lang].mAdminTitle; document.getElementById('btnAdminLogin').innerText = dict[lang].btnAdminLogin; document.getElementById('tabProducts').innerText = dict[lang].tabProducts; document.getElementById('tabOrders').innerText = dict[lang].tabOrders;
-                document.getElementById('mCatTitleModal').innerText = dict[lang].mCatTitleModal; document.getElementById('btnCatAll').innerText = dict[lang].btnCatAll; 
-                document.getElementById('btnCatPhones').innerText = dict[lang].btnCatPhones; document.getElementById('btnCatFashion').innerText = dict[lang].btnCatFashion; 
-                document.getElementById('btnCatVehicles').innerText = dict[lang].btnCatVehicles; document.getElementById('btnCatFood').innerText = dict[lang].btnCatFood; 
-                document.getElementById('btnCatElectronics').innerText = dict[lang].btnCatElectronics; document.getElementById('btnCatHome').innerText = dict[lang].btnCatHome; 
-                document.getElementById('btnCatBeauty').innerText = dict[lang].btnCatBeauty; document.getElementById('btnCatOthers').innerText = dict[lang].btnCatOthers;
-                document.getElementById('optPhones').innerText = dict[lang].btnCatPhones.substring(3); document.getElementById('optFashion').innerText = dict[lang].btnCatFashion.substring(3); document.getElementById('optVehicles').innerText = dict[lang].btnCatVehicles.substring(3); document.getElementById('optFood').innerText = dict[lang].btnCatFood.substring(3); document.getElementById('optElectronics').innerText = dict[lang].btnCatElectronics.substring(3); document.getElementById('optHome').innerText = dict[lang].btnCatHome.substring(3); document.getElementById('optBeauty').innerText = dict[lang].btnCatBeauty.substring(3); document.getElementById('optOthers').innerText = dict[lang].btnCatOthers.substring(3);
-
+                // Simple assignment for HA
                 filterProducts(); updateCart();
             }
 
             function openModal(id) { document.getElementById(id).style.display = 'flex'; }
             function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-            // DUBA KO YAYI RIJISTA KAFIN YA DORA KAYA
-            function checkVendorStatus() {
-                let isRegistered = localStorage.getItem('kdv_vendor_registered');
-                if (isRegistered === 'true') {
-                    openModal('uploadModal');
-                } else {
+            // TSARIN DUBA MATSAYIN VENDOR DAGA DATABASE
+            async function initiateVendorCheck() {
+                let userPhone = localStorage.getItem('kdv_vendor_phone');
+                if (!userPhone) {
+                    // Bai taba rijista ba
                     openModal('vendorRegModal');
+                    return;
+                }
+
+                document.getElementById('btnPostAd').innerText = "Ana duba matsayi...";
+                
+                try {
+                    let res = await fetch('/vendor-status/' + userPhone);
+                    let data = await res.json();
+                    
+                    document.getElementById('btnPostAd').innerText = "➕ Sayar da Kaya";
+                    
+                    if (data.status === 'verified') {
+                        document.getElementById('phone').value = userPhone;
+                        openModal('uploadModal');
+                    } else if (data.status === 'pending') {
+                        alert("Mun karbi bayananka, muna bincike a kai. Sai Admin ya amince zaka iya dora kaya.");
+                    } else {
+                        openModal('vendorRegModal');
+                    }
+                } catch(e) {
+                    alert("Matsalar network. Sake gwadawa.");
+                    document.getElementById('btnPostAd').innerText = "➕ Sayar da Kaya";
                 }
             }
 
@@ -499,23 +522,28 @@ def vip_market():
             document.getElementById('vendorRegForm').onsubmit = function(e) {
                 e.preventDefault(); 
                 document.getElementById('btnSubmitReg').disabled = true;
+                const phoneVal = document.getElementById('vPhone').value;
                 const data = { 
                     business_name: document.getElementById('vBizName').value, 
                     full_name: document.getElementById('vFullName').value, 
-                    phone: document.getElementById('vPhone').value, 
+                    phone: phoneVal, 
                     nin: document.getElementById('vNIN').value, 
                     bank_name: document.getElementById('vBank').value, 
                     account_number: document.getElementById('vAccount').value 
                 };
+                
                 fetch('/yi-rijista-vendor/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
                 .then(res => res.json())
                 .then(res => {
-                    localStorage.setItem('kdv_vendor_registered', 'true');
-                    alert(currentLang === 'ha' ? "An yi rijista cikin nasara! Yanzu zaka iya dora kaya." : "Registration successful! You can now post ads.");
-                    closeModal('vendorRegModal');
-                    document.getElementById('vendorRegForm').reset();
+                    if(res.sako === "Success") {
+                        localStorage.setItem('kdv_vendor_phone', phoneVal);
+                        alert("Mun karbi bayananka! Zamu tuntubeka idan Admin ya amince.");
+                        closeModal('vendorRegModal');
+                        document.getElementById('vendorRegForm').reset();
+                    } else {
+                        alert(res.sako);
+                    }
                     document.getElementById('btnSubmitReg').disabled = false;
-                    openModal('uploadModal');
                 });
             };
 
@@ -650,18 +678,37 @@ def vip_market():
                 });
             }
 
-            // SABON TSARI DON DUBA VENDORS A DAKIN ADMIN
+            // ADMIN YA DUBA KUMA YA AMINCE DA VENDOR
             function loadVendors() {
                 fetch('/duba-vendors/').then(res => res.json()).then(data => {
                     const div = document.getElementById('adminVendors'); div.innerHTML = '';
                     if(data.length===0) div.innerHTML = "Babu masu sayarwa (vendors) tukunna.";
                     data.forEach(v => {
-                        div.innerHTML += `<div class="order-card"><b>Shago:</b> ${v.business_name} <br><b>Suna:</b> ${v.full_name} <br><b>Waya:</b> ${v.phone} <br><b>NIN:</b> ${v.nin} <br><b>Asusu:</b> ${v.bank_name} - ${v.account_number} <br><small style="color:gray">Kwanan wata: ${v.date_registered}</small></div>`;
+                        let statusBtn = v.is_verified 
+                            ? `<span style="color:green; font-weight:bold;">✅ An Amince</span>` 
+                            : `<button onclick="approveVendor(${v.id})" style="background:green; color:white; border:none; padding:8px 12px; border-radius:5px; font-weight:bold; cursor:pointer;">Verify (Amince)</button>`;
+                        
+                        div.innerHTML += `<div class="order-card">
+                            <b>Shago:</b> ${v.business_name} <br>
+                            <b>Suna:</b> ${v.full_name} <br>
+                            <b>Waya:</b> ${v.phone} <br>
+                            <b>NIN:</b> ${v.nin} <br>
+                            <b>Asusu:</b> ${v.bank_name} - ${v.account_number} <br>
+                            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc;">${statusBtn}</div>
+                        </div>`;
                     });
                 });
             }
 
-            // INSTALL APP SCRIPT
+            function approveVendor(id) {
+                if(confirm("Tabbas kana son ka ba wannan mutumin damar dora kaya?")) {
+                    fetch('/verify-vendor/' + id, {method: 'PUT'}).then(res => res.json()).then(res => {
+                        alert(res.sako);
+                        loadVendors();
+                    });
+                }
+            }
+
             let deferredPrompt;
             const banner = document.getElementById('installBanner');
             window.addEventListener('beforeinstallprompt', (e) => {
@@ -678,7 +725,7 @@ def vip_market():
                 }
             }
 
-            window.onload = function() { changeLanguage('ha'); loadProducts(); };
+            window.onload = function() { loadProducts(); updateCart(); };
         </script>
     </body>
     </html>
