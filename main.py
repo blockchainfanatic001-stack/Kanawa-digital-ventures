@@ -186,7 +186,7 @@ def vip_market():
             body { font-family: 'Roboto', sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; padding-bottom: 70px; color: #333; overflow-x: hidden; }
             .top-header { background: #fff; padding: 10px 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px;}
             .menu-icon { font-size: 24px; cursor: pointer; color: #333; padding-right: 5px; font-weight: bold;}
-            .logo-text { font-size: 18px; font-weight: 900; color: #e62e04; margin: 0; letter-spacing: -0.5px; white-space: nowrap; cursor: pointer;}
+            .logo-text { font-size: 18px; font-weight: 900; color: #e62e04; margin: 0; letter-spacing: -0.5px; white-space: nowrap; cursor: pointer; user-select: none; -webkit-user-select: none;}
             .search-box { flex: 1; background: #f0f2f5; border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; border: 1px solid #e0e0e0;}
             .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; }
             .sidenav { height: 100%; width: 260px; position: fixed; z-index: 300; top: 0; left: -260px; background-color: #fff; overflow-x: hidden; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column;}
@@ -245,12 +245,10 @@ def vip_market():
             <a href="#" onclick="closeNav(); openModal('helpModal')"><span>❓</span> <span id="nHelp">Taimako</span></a>
             <a href="#" onclick="closeNav(); openModal('termsModal')"><span>📜</span> <span id="nTerms">Ka'idojin Aiki</span></a>
             <a href="#" onclick="closeNav(); initiateVendorCheck()"><span>➕</span> <span id="nSell">Sayar da Kaya</span></a>
-            <!-- GOGE LINK DIN ADMIN DAGA NAN DON TSARO -->
         </div>
 
         <div class="top-header">
             <span class="menu-icon" onclick="openNav()">☰</span>
-            <!-- KOFAR SIRRI: Danna Logo sau uku don bude Admin Panel -->
             <span class="logo-text" onclick="secretAdminTap()">Kanawa Digital Market</span>
             <div class="search-box"><span>🔍</span><input type="text" id="searchInput" placeholder="Bincika nan..." onkeyup="filterProducts()"></div>
         </div>
@@ -326,7 +324,6 @@ def vip_market():
             </div>
         </div>
 
-        <!-- SHAFIN RIJISTAR VENDOR -->
         <div id="vendorRegModal" class="modal">
             <div class="modal-content">
                 <button class="close-modal" onclick="closeModal('vendorRegModal')">&times;</button>
@@ -344,7 +341,6 @@ def vip_market():
             </div>
         </div>
 
-        <!-- SHAFIN DORA KAYA -->
         <div id="uploadModal" class="modal">
             <div class="modal-content">
                 <button class="close-modal" onclick="closeModal('uploadModal')">&times;</button>
@@ -427,17 +423,19 @@ def vip_market():
         </div>
 
         <script>
-            // KOFAR SIRRI LOGIC
+            // SABON TSARIN KOFAR SIRRI (DANNA SAU SHIDA)
             let adminTapCount = 0;
             let adminTapTimer;
             function secretAdminTap() {
                 adminTapCount++;
                 clearTimeout(adminTapTimer);
-                if (adminTapCount >= 3) {
+                // Idan an danna sau 6 za a bude Admin Panel
+                if (adminTapCount >= 6) {
                     openModal('adminModal');
                     adminTapCount = 0;
                 }
-                adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 1500);
+                // An kara lokaci zuwa dakika 2.5 (2500ms) don bada damar danna sau 6 din da kyau
+                adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 2500);
             }
 
             const EXCHANGE_RATE = 1500;
