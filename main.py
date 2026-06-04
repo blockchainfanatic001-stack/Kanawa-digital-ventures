@@ -186,7 +186,7 @@ def vip_market():
             body { font-family: 'Roboto', sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; padding-bottom: 70px; color: #333; overflow-x: hidden; }
             .top-header { background: #fff; padding: 10px 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px;}
             .menu-icon { font-size: 24px; cursor: pointer; color: #333; padding-right: 5px; font-weight: bold;}
-            .logo-text { font-size: 18px; font-weight: 900; color: #e62e04; margin: 0; letter-spacing: -0.5px; white-space: nowrap;}
+            .logo-text { font-size: 18px; font-weight: 900; color: #e62e04; margin: 0; letter-spacing: -0.5px; white-space: nowrap; cursor: pointer;}
             .search-box { flex: 1; background: #f0f2f5; border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; border: 1px solid #e0e0e0;}
             .search-box input { border: none; background: transparent; outline: none; width: 100%; font-size: 14px; }
             .sidenav { height: 100%; width: 260px; position: fixed; z-index: 300; top: 0; left: -260px; background-color: #fff; overflow-x: hidden; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column;}
@@ -245,12 +245,13 @@ def vip_market():
             <a href="#" onclick="closeNav(); openModal('helpModal')"><span>❓</span> <span id="nHelp">Taimako</span></a>
             <a href="#" onclick="closeNav(); openModal('termsModal')"><span>📜</span> <span id="nTerms">Ka'idojin Aiki</span></a>
             <a href="#" onclick="closeNav(); initiateVendorCheck()"><span>➕</span> <span id="nSell">Sayar da Kaya</span></a>
-            <a href="#" onclick="closeNav(); openModal('adminModal')"><span>👤</span> <span id="nAdmin">Dakin Gudanarwa</span></a>
+            <!-- GOGE LINK DIN ADMIN DAGA NAN DON TSARO -->
         </div>
 
         <div class="top-header">
             <span class="menu-icon" onclick="openNav()">☰</span>
-            <span class="logo-text">Kanawa Digital Market</span>
+            <!-- KOFAR SIRRI: Danna Logo sau uku don bude Admin Panel -->
+            <span class="logo-text" onclick="secretAdminTap()">Kanawa Digital Market</span>
             <div class="search-box"><span>🔍</span><input type="text" id="searchInput" placeholder="Bincika nan..." onkeyup="filterProducts()"></div>
         </div>
 
@@ -426,13 +427,26 @@ def vip_market():
         </div>
 
         <script>
+            // KOFAR SIRRI LOGIC
+            let adminTapCount = 0;
+            let adminTapTimer;
+            function secretAdminTap() {
+                adminTapCount++;
+                clearTimeout(adminTapTimer);
+                if (adminTapCount >= 3) {
+                    openModal('adminModal');
+                    adminTapCount = 0;
+                }
+                adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 1500);
+            }
+
             const EXCHANGE_RATE = 1500;
             const dict = {
                 'ha': { 
                     search: "Bincika nan...", postAd: "➕ Sayar da Kaya", empty: "Babu kayan da ya dace.", ship: "Shipping: ₦500",
                     bannerTitle: "🔥 Zafafan Kayayyaki", bannerSub: "Kudin Aikawa ₦500 kacal!", loading: "Ana lodo kayayyaki...",
                     navHome: "Gida", navCat: "Rukunoni", navCart: "Kwando", pwaTitle: "Install Kanawa Digital Market!", pwaBtn: "Install Now",
-                    nContact: "Tuntube Mu", nHelp: "Taimako", nTerms: "Ka'idojin Aiki", nSell: "Sayar da Kaya", nAdmin: "Dakin Gudanarwa",
+                    nContact: "Tuntube Mu", nHelp: "Taimako", nTerms: "Ka'idojin Aiki", nSell: "Sayar da Kaya",
                     mPostTitle: "Dora Kayanka A Saukake", lName: "Sunan Kaya", lPrice: "Farashi (₦)", lCat: "Zabi Rukuni", lDesc: "Bayanin Kaya", lVendor: "Sunan Shagonka", lPhoneR: "Lambar Waya (Za a cike da kanta)", lImg: "Dauki Hoto (Max 2MB)", btnSubmitPost: "POST AD YANZU",
                     mCartTitle: "Kwandon Siyayyarka", cSubText: "Kudin Kaya:", cShipText: "Kudin Aikawa:", cTotalText: "Jimilla:", btnNaira: "💳 BIYA DA NAIRA", btnCrypto: "🪙 BIYA DA CRYPTO",
                     chkTitle: "Bayanan Isar Da Kaya", clName: "Cikakken Suna", clPhone: "Lambar Waya", clEmail: "Imel (Don samun rasiti)", clAddress: "Cikakken Adireshi (Gida/Unguwa)", btnProceedPay: "Ci Gaba Zuwa Biyan Kudi",
@@ -449,7 +463,7 @@ def vip_market():
                     search: "Search items...", postAd: "➕ Post Ad", empty: "No items found.", ship: "Shipping: ₦500",
                     bannerTitle: "🔥 Hot Products", bannerSub: "Delivery Fee just ₦500!", loading: "Loading items...",
                     navHome: "Home", navCat: "Categories", navCart: "Cart", pwaTitle: "Install Kanawa App!", pwaBtn: "Install Now",
-                    nContact: "Contact Us", nHelp: "Help & FAQ", nTerms: "Terms & Conditions", nSell: "Sell an Item", nAdmin: "Admin Panel",
+                    nContact: "Contact Us", nHelp: "Help & FAQ", nTerms: "Terms & Conditions", nSell: "Sell an Item",
                     mPostTitle: "Post Your Ad Easily", lName: "Product Name", lPrice: "Price (₦)", lCat: "Select Category", lDesc: "Description", lVendor: "Shop Name", lPhoneR: "Phone Number (Auto-filled)", lImg: "Take Photo (Max 2MB)", btnSubmitPost: "POST AD NOW",
                     mCartTitle: "Your Shopping Cart", cSubText: "Subtotal:", cShipText: "Delivery Fee:", cTotalText: "Total:", btnNaira: "💳 PAY WITH NAIRA", btnCrypto: "🪙 PAY WITH CRYPTO",
                     chkTitle: "Delivery Details", clName: "Full Name", clPhone: "Phone Number", clEmail: "Email (For receipt)", clAddress: "Full Delivery Address", btnProceedPay: "Proceed to Payment",
@@ -480,7 +494,7 @@ def vip_market():
                 if(document.getElementById('loadingTxt')) document.getElementById('loadingTxt').innerText = dict[lang].loading;
                 document.getElementById('navHome').innerText = dict[lang].navHome; document.getElementById('navCat').innerText = dict[lang].navCat; document.getElementById('navCart').innerText = dict[lang].navCart;
                 document.getElementById('pwaTitle').innerText = dict[lang].pwaTitle; document.getElementById('pwaBtn').innerText = dict[lang].pwaBtn;
-                document.getElementById('nContact').innerText = dict[lang].nContact; document.getElementById('nHelp').innerText = dict[lang].nHelp; document.getElementById('nTerms').innerText = dict[lang].nTerms; document.getElementById('nSell').innerText = dict[lang].nSell; document.getElementById('nAdmin').innerText = dict[lang].nAdmin;
+                document.getElementById('nContact').innerText = dict[lang].nContact; document.getElementById('nHelp').innerText = dict[lang].nHelp; document.getElementById('nTerms').innerText = dict[lang].nTerms; document.getElementById('nSell').innerText = dict[lang].nSell;
                 document.getElementById('mPostTitle').innerText = dict[lang].mPostTitle; document.getElementById('lName').innerText = dict[lang].lName; document.getElementById('lPrice').innerText = dict[lang].lPrice; document.getElementById('lCat').innerText = dict[lang].lCat; document.getElementById('lDesc').innerText = dict[lang].lDesc; document.getElementById('lVendor').innerText = dict[lang].lVendor; document.getElementById('lPhoneR').innerText = dict[lang].lPhoneR; document.getElementById('lImg').innerText = dict[lang].lImg; document.getElementById('btnSubmitPost').innerText = dict[lang].btnSubmitPost;
                 document.getElementById('mCartTitle').innerText = dict[lang].mCartTitle; document.getElementById('cSubText').innerText = dict[lang].cSubText; document.getElementById('cShipText').innerText = dict[lang].cShipText; document.getElementById('cTotalText').innerText = dict[lang].cTotalText; document.getElementById('btnCheckoutNaira').innerText = dict[lang].btnNaira; document.getElementById('btnCheckoutCrypto').innerText = dict[lang].btnCrypto;
                 document.getElementById('chkTitle').innerText = dict[lang].chkTitle; document.getElementById('clName').innerText = dict[lang].clName; document.getElementById('clPhone').innerText = dict[lang].clPhone; document.getElementById('clEmail').innerText = dict[lang].clEmail; document.getElementById('clAddress').innerText = dict[lang].clAddress; document.getElementById('btnProceedPay').innerText = dict[lang].btnProceedPay;
